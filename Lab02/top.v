@@ -1,5 +1,4 @@
 // Do not submit this file.
-`include "cpu.v"
 
 module top; 
   reg reset;
