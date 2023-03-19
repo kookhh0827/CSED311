@@ -1,4 +1,5 @@
 `include "opcodes.v"
+`include "alu_opcodes.v"
 
 module Mux(input[31:0] input1,  // input1
            input[31:0] input2,  // input2

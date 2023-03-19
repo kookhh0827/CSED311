@@ -1,4 +1,5 @@
 `include "opcodes.v"
+`include "alu_opcodes.v"
 
 module PC(input	reset,
           input clk,
