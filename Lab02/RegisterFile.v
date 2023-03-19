@@ -1,3 +1,5 @@
+`include "opcodes.v"
+
 module RegisterFile(input	reset,
                     input clk,
                     input [4:0] rs1,          // source register 1

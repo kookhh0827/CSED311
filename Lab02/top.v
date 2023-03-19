@@ -1,5 +1,7 @@
 // Do not submit this file.
 
+`include "opcodes.v"
+
 module top; 
   reg reset;
   reg clk;

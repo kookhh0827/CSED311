@@ -1,3 +1,5 @@
+`include "opcodes.v"
+
 module InstMemory #(parameter MEM_DEPTH = 1024) (input reset,
                                                  input clk,
                                                  input [31:0] addr,   // address of the instruction memory

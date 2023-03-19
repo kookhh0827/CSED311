@@ -1,3 +1,5 @@
+`include "opcodes.v"
+
 module PC(input	reset,
           input clk,
           input [31:0] next_pc, // next pc state
