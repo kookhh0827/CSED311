@@ -1,4 +1,5 @@
 `include "opcodes.v"
+`include "alu_opcodes.v"
 
 module InstMemory #(parameter MEM_DEPTH = 1024) (input reset,
                                                  input clk,

@@ -9,6 +9,7 @@
 // 4. `include files if required
 
 `include "opcodes.v"
+`include "alu_opcodes.v"
 
 module CPU(input reset,       // positive reset signal
            input clk,         // clock signal
@@ -25,7 +26,7 @@ module CPU(input reset,       // positive reset signal
   // for Immedate Generate output
   wire [31:0] imm_gen_out;
   // for ALU Control Unit output
-  wire [8:0] alu_op; // 8 bits to cover <= 256 alu_ops
+  wire [4:0] alu_op; // 5 bits to cover <= 32 alu_ops
   // for ALU outputs
   wire [31:0] alu_result;
   wire alu_bcond;
@@ -124,7 +125,7 @@ module CPU(input reset,       // positive reset signal
   ALUControlUnit alu_ctrl_unit (
     .opcode(instr[6:0]),   // input
     .funct3(instr[14:12]), // input
-    .funct7(instr[31:25]), //input
+    .funct7(instr[30]), //input
     .alu_op(alu_op)        // output
   );
   

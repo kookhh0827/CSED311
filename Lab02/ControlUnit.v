@@ -1,4 +1,5 @@
 `include "opcodes.v"
+`include "alu_opcodes.v"
 
 module ControlUnit(input [6:0] opcode,
                    output reg is_jal,
