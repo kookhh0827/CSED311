@@ -1,4 +1,5 @@
 `include "opcodes.v"
+`include "alu_opcodes.v"
 
 module ALU(input [8:0] alu_op,
            input [31:0] alu_in_1,

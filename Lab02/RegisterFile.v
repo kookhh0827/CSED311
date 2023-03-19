@@ -18,6 +18,8 @@ module RegisterFile(input	reset,
   assign rs1_dout = rf[rs1];
   assign rs2_dout = rf[rs2];
   
+  // Todo : Synchronously check ecall is nop or halt (check GPR[x17] == 10 or not)
+  
   // Maybe : Synchronously write data to the register file
   always @(posedge clk) begin
     if (write_enable) begin

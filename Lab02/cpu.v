@@ -36,6 +36,7 @@ module CPU(input reset,       // positive reset signal
   // for conditional branch
   wire [31:0] current_pc_plus_4 = current_pc + 4;
   wire [31:0] current_pc_plus_imm = current_pc + imm_gen_out;
+  wire [31:0] alu_result_with_and = alu_result & 32'hFFFFFFFE;
   wire [31:0] current_pc_after_mux_prsrc_1;
   wire PCSrc_1 = (branch & alu_bcond) | is_jal;
   wire PCSrc_2 = is_jalr;
@@ -54,7 +55,7 @@ module CPU(input reset,       // positive reset signal
   
   // second mux for conditional branch
   Mux mux_pcsrc_2 (
-    .input1(alu_result),
+    .input1(alu_result_with_and),
     .input2(current_pc_after_mux_prsrc_1),
     .sel(PCSrc_2),
     .out(next_pc)
