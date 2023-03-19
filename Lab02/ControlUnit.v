@@ -1,5 +1,5 @@
 module ControlUnit(input [6:0] opcode,
-                   output is_jar,
+                   output is_jal,
                    output is_jalr,      
                    output branch,        
                    output mem_read,        

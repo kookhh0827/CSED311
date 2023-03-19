@@ -12,9 +12,7 @@ module InstMemory #(parameter MEM_DEPTH = 1024) (input reset,
   // TODO
   // Maybe : Asynchronously read instruction from the memory 
   // (use imem_addr to access memory)
-  always @(*) begin
-    dout = mem[imem_addr];
-  end
+  assign dout = mem[imem_addr];
 
   // Initialize instruction memory (do not touch except path)
   always @(posedge clk) begin
@@ -22,7 +20,7 @@ module InstMemory #(parameter MEM_DEPTH = 1024) (input reset,
       for (i = 0; i < MEM_DEPTH; i = i + 1)
           mem[i] = 32'b0;
       // Provide path of the file including instructions with binary format
-      $readmemh("/path/to/binary_format/file", mem);
+      $readmemh("./non-controlflow_mem.txt", mem);
     end
   end
 
@@ -45,14 +43,7 @@ module DataMemory #(parameter MEM_DEPTH = 16384) (input reset,
   // TODO
   // Maybe : Asynchrnously read data from the memory
   // (use dmem_addr to access memory)
-  always @(*) begin
-    if (mem_read) begin
-        dout = mem[addr];
-    end
-    else begin
-        dout = 0;
-    end
-  end
+  assign dout = mem[addr];
   // Maybe : Synchronously write data to the memory
   // (use dmem_addr to access memory)
   always @(posedge clk) begin

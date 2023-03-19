@@ -19,7 +19,7 @@ module CPU(input reset,       // positive reset signal
   // for RegisterFile outputs
   wire [31:0] rs1_dout, rs2_dout; 
   // for Control Unit outputs
-  wire is_jar, is_jalr, branch, mem_read, mem_to_reg, mem_write, alu_src, write_enable, pc_to_reg, is_ecall;
+  wire is_jal, is_jalr, branch, mem_read, mem_to_reg, mem_write, alu_src, write_enable, pc_to_reg, is_ecall;
   // for Immedate Generate output
   wire [31:0] imm_gen_out;
   // for ALU Control Unit output

@@ -13,10 +13,8 @@ module RegisterFile(input	reset,
 
   // TODO
   // Maybe : Asynchronously read register file
-  always @(*) begin
-    rs1_dout = rf[rs1];
-    rs2_dout = rf[rs2];
-  end
+  assign rs1_dout = rf[rs1];
+  assign rs2_dout = rf[rs2];
   
   // Maybe : Synchronously write data to the register file
   always @(posedge clk) begin
