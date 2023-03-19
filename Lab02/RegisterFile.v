@@ -7,9 +7,10 @@ module RegisterFile(input	reset,
                     input [4:0] rs2,          // source register 2
                     input [4:0] rd,           // destination register
                     input [31:0] rd_din,      // input data for rd
-                    input write_enable,          // RegWrite signal
+                    input write_enable,       // RegWrite signal
                     output [31:0] rs1_dout,   // output of rs 1
-                    output [31:0] rs2_dout);  // output of rs 2
+                    output [31:0] rs2_dout,   // output of rs 2
+                    output [31:0] x17);
   integer i;
   // Register file
   reg [31:0] rf[0:31];
@@ -18,12 +19,13 @@ module RegisterFile(input	reset,
   // Maybe : Asynchronously read register file
   assign rs1_dout = rf[rs1];
   assign rs2_dout = rf[rs2];
+  assign x17 = rf[17];
   
   // Todo : Synchronously check ecall is nop or halt (check GPR[x17] == 10 or not)
   
   // Maybe : Synchronously write data to the register file
   always @(posedge clk) begin
-    if (write_enable) begin
+    if (write_enable && rd != 0) begin
         rf[rd] <= rd_din;
     end
     else begin

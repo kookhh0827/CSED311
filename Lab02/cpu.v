@@ -20,7 +20,7 @@ module CPU(input reset,       // positive reset signal
   // for InstMemory output
   wire [31:0] instr;  
   // for RegisterFile outputs
-  wire [31:0] rs1_dout, rs2_dout; 
+  wire [31:0] rs1_dout, rs2_dout, x17; 
   // for Control Unit outputs
   wire is_jal, is_jalr, branch, mem_read, mem_to_reg, mem_write, alu_src, write_enable, pc_to_reg, is_ecall;
   // for Immedate Generate output
@@ -62,10 +62,19 @@ module CPU(input reset,       // positive reset signal
     .out(next_pc)
   );
   
+  HaltChecker haltcheck (
+    .reset(reset),          // input
+    .clk(clk),              // input
+    .x17(x17),              // input
+    .is_ecall(is_ecall),    // input
+    .is_halted(is_halted)   // output
+  );
+  
   // PC must be updated on the rising edge (positive edge) of the clock.
   PC pc(
     .reset(reset),            // input (Use reset to initialize PC. Initial value must be 0)
     .clk(clk),                // input
+    .is_halted(is_halted),    // input
     .next_pc(next_pc),        // input
     .current_pc(current_pc)   // output
   );
@@ -96,7 +105,8 @@ module CPU(input reset,       // positive reset signal
     .rd_din(rd_din),              // input
     .write_enable(write_enable),  // input
     .rs1_dout(rs1_dout),          // output
-    .rs2_dout(rs2_dout)           // output
+    .rs2_dout(rs2_dout),          // output
+    .x17(x17)                     // output
   );
 
    
