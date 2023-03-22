@@ -16,14 +16,12 @@ module RegisterFile(input	reset,
   reg [31:0] rf[0:31];
 
   // TODO
-  // Maybe : Asynchronously read register file
+  // Asynchronously read register file
   assign rs1_dout = rf[rs1];
   assign rs2_dout = rf[rs2];
   assign x17 = rf[17];
   
-  // Todo : Synchronously check ecall is nop or halt (check GPR[x17] == 10 or not)
-  
-  // Maybe : Synchronously write data to the register file
+  // Synchronously write data to the register file
   always @(posedge clk) begin
     if (write_enable && rd != 0) begin
         rf[rd] <= rd_din;

@@ -8,7 +8,7 @@ module PC(input	reset,
           output reg [31:0] current_pc); // current pc state
     
     // Todo
-    // Maybe : update PC at every clock cycle
+    // update PC at every clock cycle
     // Initialize current pc state
     always @(posedge clk) begin
         // Reset current_pc

@@ -13,7 +13,7 @@ module InstMemory #(parameter MEM_DEPTH = 1024) (input reset,
   assign imem_addr = {2'b00, addr >> 2};
 
   // TODO
-  // Maybe : Asynchronously read instruction from the memory 
+  // Asynchronously read instruction from the memory 
   // (use imem_addr to access memory)
   assign dout = mem[imem_addr];
 
@@ -23,7 +23,7 @@ module InstMemory #(parameter MEM_DEPTH = 1024) (input reset,
       for (i = 0; i < MEM_DEPTH; i = i + 1)
           mem[i] = 32'b0;
       // Provide path of the file including instructions with binary format
-      $readmemh("./loop_mem.txt", mem);
+      $readmemh("./basic_mem.txt", mem);
     end
   end
 
@@ -44,10 +44,10 @@ module DataMemory #(parameter MEM_DEPTH = 16384) (input reset,
   assign dmem_addr = {2'b00, addr >> 2};
 
   // TODO
-  // Maybe : Asynchrnously read data from the memory
+  // Asynchrnously read data from the memory
   // (use dmem_addr to access memory)
   assign dout = mem_read ? mem[addr] : 0;
-  // Maybe : Synchronously write data to the memory
+  // Synchronously write data to the memory
   // (use dmem_addr to access memory)
   always @(posedge clk) begin
     if (mem_write) begin

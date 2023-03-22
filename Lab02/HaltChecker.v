@@ -7,16 +7,13 @@ module HaltChecker(input reset,
                    input is_ecall,
                    output reg is_halted);
     
-    always @(posedge clk) begin
-        if (reset) begin
-            is_halted <= 0;
-        end
-        else if (is_ecall && x17 == 10) begin
-            is_halted <= 1;
+    always @(*) begin
+        if (is_ecall && x17 == 10) begin
+            is_halted = 1;
         end
         else begin
-            is_halted <= is_halted;
-        end
+            is_halted = 0;
+        end    
     end
 endmodule
 
