@@ -26,9 +26,6 @@ module RegisterFile(input	reset,
     if (write_enable && rd != 0) begin
         rf[rd] <= rd_din;
     end
-    else begin
-        rf[rd] <= rf[rd];
-    end
   end
 
   // Initialize register file (do not touch)
