@@ -23,7 +23,7 @@ module InstMemory #(parameter MEM_DEPTH = 1024) (input reset,
       for (i = 0; i < MEM_DEPTH; i = i + 1)
           mem[i] = 32'b0;
       // Provide path of the file including instructions with binary format
-      $readmemh("./basic_mem.txt", mem);
+      $readmemh("./non-controlflow_mem.txt", mem);
     end
   end
 
@@ -46,15 +46,12 @@ module DataMemory #(parameter MEM_DEPTH = 16384) (input reset,
   // TODO
   // Asynchrnously read data from the memory
   // (use dmem_addr to access memory)
-  assign dout = mem_read ? mem[addr] : 0;
+  assign dout = mem_read ? mem[dmem_addr] : 0;
   // Synchronously write data to the memory
   // (use dmem_addr to access memory)
   always @(posedge clk) begin
     if (mem_write) begin
-        mem[addr] <= din;
-    end
-    else begin
-        mem[addr] <= mem[addr];
+        mem[dmem_addr] <= din;
     end
   end
 
