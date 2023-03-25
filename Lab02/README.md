@@ -112,10 +112,10 @@ PC:=PC+4(0)와 PC:=PC+immediate(1) 중 Output을 결정하는 MUX이다.
 mux\_pcsrc\_1의 output(0)과 ALU에서 계산된 register의 값과 immediate의 합(1) 중 Output을 결정하는 MUX이다.
 ```
 
-### HaltChecker: Sequential
+### HaltChecker: Combinational
 
 ``` text
-always @(posedge clk)
+always @(*)
 reset input이 1일 때 output인 is_halted를 0으로 초기화해주며, 
 control unit으로부터 입력되는 is_ecall control bit이 1이고 GPR[x17]==10이면, 
 is_halted에 1을 저장하며 프로그램을 종료한다.
@@ -124,7 +124,7 @@ is_halted에 1을 저장하며 프로그램을 종료한다.
 ### PC: Sequential
 
 ```text
-reset input이 1일 때, current_pc를 1로 초기화해주며,
+reset input이 1일 때, current_pc를 0로 초기화해주며,
 is_halted의 값이 1이라면 current_pc에 변화를 주지 않고
 0이라면 mux\_pcsrc\_2의 output을 current_pc에 저장한다.
 ```
