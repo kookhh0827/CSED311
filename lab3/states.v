@@ -20,6 +20,7 @@
 `define MEM2_RD 5'd17
 `define MEM3_RD 5'd18
 `define MEM4_RD 5'd19 
-`define WB_R    5'd20 
-`define WB_M    5'd21
-`define WB_J    5'd22
+`define WB_M    5'd20 
+`define WB_R    5'd21
+`define WB_JAL  5'd22
+`define WB_JALR 5'd23

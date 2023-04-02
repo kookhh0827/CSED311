@@ -14,8 +14,8 @@ module CPU(input reset,       // positive reset signal
   
   /***** localparams declarations *****/
   localparam halt_register = 5'd17;
-  localparam pc_increment = 31'd4;
-  localparam garbage = 31'd0;
+  localparam pc_increment = 32'd4;
+  localparam garbage = 32'd0;
   
   /***** Wire declarations *****/
   // for Program Counter
@@ -53,8 +53,8 @@ module CPU(input reset,       // positive reset signal
   
   // ---------- Mux for selecting next PC ----------
   Mux mux_next_pc(
+    .input0(current_ALUOut),    // input
     .input1(ALUOut),            // input
-    .input2(current_ALUOut),    // input
     .sel(PCSource),             // input
     .out(next_pc)               // output
   );
@@ -65,6 +65,7 @@ module CPU(input reset,       // positive reset signal
     .reset(reset),                      // input (Use reset to initialize PC. Initial value must be 0)
     .clk(clk),                          // input
     .is_halted(is_halted),              // input
+    .is_ecall(is_ecall),                // input
     .write_enable_pc(write_enable_pc),  // input 
     .next_pc(next_pc),                  // input
     .current_pc(current_pc)             // output
@@ -72,8 +73,8 @@ module CPU(input reset,       // positive reset signal
   
   // ---------- Mux for Instruction or DataMemory ----------
   Mux mux_mem_addr(
+    .input0(current_pc),  // input 
     .input1(ALUOut),      // input
-    .input2(current_pc),  // input 
     .sel(IorD),           // input 
     .out(mem_addr)        // output
   );
@@ -92,16 +93,16 @@ module CPU(input reset,       // positive reset signal
   
   // ---------- Mux for selecting write_data ----------
   Mux mux_write_data(
+    .input0(ALUOut),  // input
     .input1(MDR),     // input
-    .input2(ALUOut),  // input
     .sel(MemtoReg),   // input
     .out(write_data)  // output
   );
   
   // ---------- Mux for selecting rs1_src ----------
-  Mux mux_rs1_src(
+  Mux #(.bits(5)) mux_rs1_src( 
+    .input0(IR[19:15]),  // input
     .input1(halt_register),     // input
-    .input2(IR[19:15]),  // input
     .sel(is_ecall),   // input
     .out(rs1_src)  // output
   );
@@ -165,18 +166,18 @@ module CPU(input reset,       // positive reset signal
   
   // ---------- Mux for selecting alu_src_1 ----------
   Mux mux_alu_src_1(
-    .input1(current_pc),  // input
-    .input2(A),           // input
+    .input0(current_pc),           // input
+    .input1(A),  // input
     .sel(ALUSrcA),        // input
     .out(alu_src_1)       // output
   );
   
   // ---------- Mux for selecting alu_src_2 ----------
   Mux4 mux_alu_src_2(
-    .input1(B),             // input
-    .input2(pc_increment),  // input
-    .input3(imm_gen_out),   // input
-    .input4(garbage),       // input
+    .input0(B),             // input
+    .input1(pc_increment),  // input
+    .input2(imm_gen_out),   // input
+    .input3(garbage),       // input
     .sel(ALUSrcB),          // input
     .out(alu_src_2)         // output
   );
