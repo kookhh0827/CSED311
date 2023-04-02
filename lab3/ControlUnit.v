@@ -65,7 +65,7 @@ module ControlUnit(input reset,
         .ALUOp(ALUOp),                   // output
         .ALUSrcA(ALUSrcA),               // output
         .ALUSrcB(ALUSrcB),               // output
-        .RegWrite(RegWrite),             // output
+        .RegWrite(RegWrite)              // output
     );
     
     // ---------- program counter update logic ----------
