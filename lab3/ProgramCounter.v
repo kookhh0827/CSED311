@@ -1,4 +1,4 @@
-module PC(input	reset,
+module PC(input reset,
           input clk,
           input is_halted,
           input write_enable_pc,

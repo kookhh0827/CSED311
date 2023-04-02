@@ -99,7 +99,7 @@ module CPU(input reset,       // positive reset signal
   );
   
   // ---------- Mux for selecting rs1_src ----------
-  Mux mux_write_data(
+  Mux mux_rs1_src(
     .input1(halt_register),     // input
     .input2(IR[19:15]),  // input
     .sel(is_ecall),   // input
@@ -130,6 +130,23 @@ module CPU(input reset,       // positive reset signal
 
   // ---------- Control Unit ----------
   ControlUnit ctrl_unit(
+    .reset(reset),                   // input
+    .clk(clk),                       // input
+    .opcode(IR[6:0]),                // input
+    .alu_bcond(alu_bcond),           // input
+    .PCWriteNotCond(PCWriteNotCond), // output
+    .PCWrite(PCWrite),               // output
+    .IorD(IorD),                     // output
+    .MemRead(MemRead),               // output
+    .MemWrite(MemWrite),             // output
+    .MemtoReg(MemtoReg),             // output
+    .IRWrite(IRWrite),               // output
+    .PCSource(PCSource),             // output
+    .ALUOp(ALUOp),                   // output
+    .ALUSrcA(ALUSrcA),               // output
+    .ALUSrcB(ALUSrcB),               // output
+    .RegWrite(RegWrite),             // output
+    .is_ecall(is_ecall)              // output
   );
 
   // ---------- Immediate Generator ----------

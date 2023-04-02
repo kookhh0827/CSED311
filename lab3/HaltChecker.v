@@ -19,4 +19,3 @@ module HaltChecker(input reset,
     end
 endmodule
 
-

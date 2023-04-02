@@ -22,7 +22,7 @@ module ALUControlUnit(input [2:0] funct3,
                 default: alu_control = `ALU_NOP;
             endcase
         end
-        else if (ALUOP == 2'b10) begin
+        else if (ALUOp == 2'b10) begin
             // real alu op case
             if (funct7 && funct3 == `FUNCT3_SUB) begin
                 alu_control = `ALU_SUB;
