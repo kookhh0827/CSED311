@@ -16,15 +16,15 @@ module AddressSelector(input [6:0] opcode,
     // dispatch rom 0
     always @(*) begin
         case(opcode)
-        `ARITHMETIC:      dispatch_rom_0 = `EX1_R;
-        `ARITHMETIC_IMM: dispatch_rom_0 = `EX1_I;
+        `ARITHMETIC:      dispatch_rom_0 = `EX_R;
+        `ARITHMETIC_IMM: dispatch_rom_0 = `EX_I;
         `LOAD,
         `STORE:           dispatch_rom_0 = `EX_LW;
         `BRANCH:          dispatch_rom_0 = `EX1_B;
         `JALR:            dispatch_rom_0 = `WB_JALR;
         `JAL:             dispatch_rom_0 = `WB_JAL;
-        `ECALL:           dispatch_rom_0 = `IF1;
-        default:          dispatch_rom_0 = `IF1;
+        `ECALL:           dispatch_rom_0 = `IF;
+        default:          dispatch_rom_0 = `IF;
         endcase
     end
     
@@ -33,13 +33,13 @@ module AddressSelector(input [6:0] opcode,
         case(opcode)
         `ARITHMETIC,
         `ARITHMETIC_IMM: dispatch_rom_1 = `WB_R;
-        `LOAD:            dispatch_rom_1 = `MEM1_RD;
-        `STORE:           dispatch_rom_1 = `MEM1_WR;
+        `LOAD:            dispatch_rom_1 = `MEM_RD;
+        `STORE:           dispatch_rom_1 = `MEM_WR;
         `BRANCH,
         `JALR,
         `JAL,
-        `ECALL:           dispatch_rom_1 = `IF1;
-        default:          dispatch_rom_1 = `IF1;
+        `ECALL:           dispatch_rom_1 = `IF;
+        default:          dispatch_rom_1 = `IF;
         endcase
     end
     

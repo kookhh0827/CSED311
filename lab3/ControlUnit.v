@@ -67,7 +67,7 @@ module ControlUnit(input reset,
     // ---------- program counter update logic ----------
     always @(posedge clk) begin
         if (reset) begin
-            current_state <= `IF1;
+            current_state <= 0;
         end
         else begin
             current_state <= next_state;

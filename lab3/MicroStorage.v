@@ -17,10 +17,7 @@ module MicroStorage(input [4:0] current_state,
     
     always @(*) begin
         case(current_state)
-        `IF1,
-        `IF2,
-        `IF3,
-        `IF4: begin
+        `IF: begin
             AddrCtl = 2'b11;
             {PCWriteNotCond, PCWrite, IorD, MemRead, MemWrite, MemtoReg, IRWrite, PCSource, ALUOp, ALUSrcA, ALUSrcB, RegWrite} = 14'b00010x1xxxxxx0;
         end
@@ -28,19 +25,11 @@ module MicroStorage(input [4:0] current_state,
             AddrCtl = 2'b01;
             {PCWriteNotCond, PCWrite, IorD, MemRead, MemWrite, MemtoReg, IRWrite, PCSource, ALUOp, ALUSrcA, ALUSrcB, RegWrite} = 14'b00x00x00000010;
         end
-        `EX1_R: begin
-            AddrCtl = 2'b11;
-            {PCWriteNotCond, PCWrite, IorD, MemRead, MemWrite, MemtoReg, IRWrite, PCSource, ALUOp, ALUSrcA, ALUSrcB, RegWrite} = 14'b00x00x0x101000;
-        end
-        `EX2_R: begin
+        `EX_R: begin
             AddrCtl = 2'b10;
             {PCWriteNotCond, PCWrite, IorD, MemRead, MemWrite, MemtoReg, IRWrite, PCSource, ALUOp, ALUSrcA, ALUSrcB, RegWrite} = 14'b00x00x0x101000;
         end
-        `EX1_I: begin
-            AddrCtl = 2'b11;
-            {PCWriteNotCond, PCWrite, IorD, MemRead, MemWrite, MemtoReg, IRWrite, PCSource, ALUOp, ALUSrcA, ALUSrcB, RegWrite} = 14'b00x00x0x111100;
-        end
-        `EX2_I: begin
+        `EX_I: begin
             AddrCtl = 2'b10;
             {PCWriteNotCond, PCWrite, IorD, MemRead, MemWrite, MemtoReg, IRWrite, PCSource, ALUOp, ALUSrcA, ALUSrcB, RegWrite} = 14'b00x00x0x111100;
         end
@@ -56,20 +45,11 @@ module MicroStorage(input [4:0] current_state,
             AddrCtl = 2'b00;
             {PCWriteNotCond, PCWrite, IorD, MemRead, MemWrite, MemtoReg, IRWrite, PCSource, ALUOp, ALUSrcA, ALUSrcB, RegWrite} = 14'b01x00x00000100;
         end
-        `MEM1_WR,
-        `MEM2_WR,
-        `MEM3_WR: begin
-            AddrCtl = 2'b11;
-            {PCWriteNotCond, PCWrite, IorD, MemRead, MemWrite, MemtoReg, IRWrite, PCSource, ALUOp, ALUSrcA, ALUSrcB, RegWrite} = 14'b00101x0xxxxxx0;
-        end 
-        `MEM4_WR: begin
+        `MEM_WR: begin
             AddrCtl = 2'b00;
             {PCWriteNotCond, PCWrite, IorD, MemRead, MemWrite, MemtoReg, IRWrite, PCSource, ALUOp, ALUSrcA, ALUSrcB, RegWrite} = 14'b01101x00000010;
         end
-        `MEM1_RD,
-        `MEM2_RD,
-        `MEM3_RD,
-        `MEM4_RD: begin
+        `MEM_RD: begin
             AddrCtl = 2'b11;
             {PCWriteNotCond, PCWrite, IorD, MemRead, MemWrite, MemtoReg, IRWrite, PCSource, ALUOp, ALUSrcA, ALUSrcB, RegWrite} = 14'b00110x0x001100;
         end
