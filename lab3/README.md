@@ -15,7 +15,7 @@ Single-Cycle CPU에서는 구조적 효율성이 떨어져, 다수의 Unit이 �
 
 Lab Instruction으로 제공되는 기본 Circuit에서 필요한 Unit을 더해 디자인하였다.
 
-![Circuit\_Design1](./image_sources/Circuit_Design1.jpeg)
+![Circuit\_Design1](./image_sources/Circuit_Design1.png)
 
 #### 추가 된 점
 
@@ -217,10 +217,9 @@ Control Bit은 우선 생각하는 대로 구현한 후 오류 발생 시 고쳐
 ## Conclusion
 
 1. **Number Of Cycles**
-    | # Cycles  | Program  |
-    |:---------:|:--------:|
-    |basic_ripes|loop_ripes|
-    |   117     |   978    |
+    |  Program |basic_ripes|loop_ripes|
+    |:--------:|:---------:|:--------:|
+    | # Cycles |    117    |    978   |
 
 2. **Lab Conclusion**  
 Multi-Cycle CPU가 공간과 시간 모두에서 효율적이라는 점을 확인할 수 있었다.
