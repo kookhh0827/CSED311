@@ -38,7 +38,9 @@ Single-Cycle CPU는 한 Cycle 내에 하나의 연산 모두를 처리해야한�
 다른 곳에서는 GPR[rd] = GPR[x1] (op) GPR[x2] 를 수행하고 있을 것이다.
 따라서, ALU를 2개 이상 존재해야 한 Cycle 내에 Instruction을 성공적으로 처리할 수 있다.
 하지만, Multi-Cycle의 경우 ALU, Memory 등을 하나만 두어
-한 Stage에서는 각 Unit을 1번만 사용할 수 있도록 만든다.  
+한 Stage에서는 각 Unit을 1번만 사용할 수 있도록 만든다.
+또한, Single-Cycle CPU와 달리 Multi-Cycle CPU의 경우 각 Stage 마다 하나의 Cycle이 필요하고,
+Instruction 마다 필요한 Stage가 다르기 때문에 더 빠른 실행시간을 기대할 수 있다.
 
 2. **Why Multi-Cycle CPU is better?**  
     1) 공간 효율성 증가  
@@ -61,10 +63,14 @@ Single-Cycle CPU는 한 Cycle 내에 하나의 연산 모두를 처리해야한�
     ALU는 PC:=PC+4, Branch Condition Check, ALU 계산시에 필요하다.
     따라서, Input을 고를 수 있는 MUX와 Control Bit를 추가하고,
     계산 결과를 저장할 수 있는 Register(ALUOut)를 둔다.
+    Branch Instruction의 경우에는 EX의 첫번째 Stage에서 Not Taken일 때 결과값을
+    먼저 계산하여 ALUOut에 저장해두고, Taken일 때에는 ALU의 결과값과 ALUOut의 결과값 중
+    ALU의 결과값을 택하게 만든다.
+    
 
 ### Microcode Controller
 
-#### Truth Table
+#### State Design Table
 
 ![Truth\_Table](./image_sources/Truth_Table.jpeg)
 
@@ -112,7 +118,9 @@ Micro Storage는 현재 state를 보고 어떤 ControlBits와 AddrCtl를 결정�
 AddrCtl은 위 TruthTable의 ControlFlow를 따라 결정되며,
 ControlBits는 아래 TruthTable를 통해 알 수 있다.
 
-![Truth\_Table2]()
+![Truth\_Table2](./image_sources/Control_Bit_Table.png)
+
+Don't Care Bit의 경우 실제 구현상 0으로 처리하였다.
 
 ## Implementation
 
@@ -135,7 +143,7 @@ reset이 input으로 들어오면 current pc를 0으로 초기화한다.
 IorD를 Control Bit로 받아 0일 경우 PC를 통해 Instruction 주소를,
 1 일 땐, ALUOut에서 계산된 Data Memory 주소를 출력한다.
 
-### ControlUnit
+### ControlUnit: Synchronous
 
 위 Microcode Controller 디자인을 따라 구현하였으며, 3개의 SubModules를 가진다.
 
@@ -212,7 +220,7 @@ Control Bit은 우선 생각하는 대로 구현한 후 오류 발생 시 고쳐
     | # Cycles  | Program  |
     |:---------:|:--------:|
     |basic_ripes|loop_ripes|
-    |           |          |
+    |   117     |   978    |
 
 2. **Lab Conclusion**  
 Multi-Cycle CPU가 공간과 시간 모두에서 효율적이라는 점을 확인할 수 있었다.
