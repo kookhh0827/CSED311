@@ -46,6 +46,9 @@ module CPU(input reset,       // positive reset signal
   wire id_is_halted;
   // for stall
   wire is_stall;
+  // for ecall data forwarding
+  wire is_ecall_forward;
+  wire x17;
   
   /***** Register declarations *****/
   // You need to modify the width of registers
@@ -161,9 +164,9 @@ module CPU(input reset,       // positive reset signal
     .is_stall(is_stall)
   );
 
-  // ---------s- Control Unit ----------
+  // ---------- Control Unit ----------
   ControlUnit ctrl_unit (
-    .opcode(IF_ID_inst[6:0]),        // input
+    .opcode(IF_ID_inst[6:0]),           // input
     .mem_read(mem_read_in),             // output
     .mem_to_reg(mem_to_reg_in),         // output
     .mem_write(mem_write_in),           // output
@@ -175,16 +178,27 @@ module CPU(input reset,       // positive reset signal
   );
   
   Mux #(.bits(9)) mux_control_unit( 
-    .input0({mem_read_in, mem_to_reg_in, mem_write_in, alu_src_in, write_enable_in, pc_to_reg_in, is_ecall_in, alu_op_in}),  // input
-    .input1(9'b000000000),      // input
-    .sel(is_stall),              // input
-    .out({mem_read_out, mem_to_reg_out, mem_write_out, alu_src_out, write_enable_out, pc_to_reg_out, is_ecall_out, alu_op_out})                // output
+    .input0({mem_read_in, mem_to_reg_in, mem_write_in, alu_src_in, write_enable_in, pc_to_reg_in, is_ecall_in, alu_op_in}),     // input
+    .input1(9'b000000000),                                                                                                      // input
+    .sel(is_stall),                                                                                                             // input
+    .out({mem_read_out, mem_to_reg_out, mem_write_out, alu_src_out, write_enable_out, pc_to_reg_out, is_ecall_out, alu_op_out}) // output
+  );
+
+  // ---------- ecall data forward selector ----------
+  assign is_ecall_forward = EX_MEM_reg_write && (EX_MEM_rd == 17);
+
+  // ---------- Mux for selecting x17 ----------
+  Mux #(.bits(5)) mux_rs1_src( 
+    .input0(rs1_dout),        // input
+    .input1(EX_MEM_alu_out),  // input
+    .sel(is_ecall_forward),   // input
+    .out(x17)                 // output
   );
 
   // ---------- Halt Checker ----------
   HaltChecker haltchecker (
-    .x17(rs1_dout),            // input
-    .is_ecall(is_ecall_out),       // input
+    .x17(x17),                 // input
+    .is_ecall(is_ecall_out),   // input
     .is_halted(id_is_halted)   // output
   );
 
