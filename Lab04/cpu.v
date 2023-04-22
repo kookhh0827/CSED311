@@ -48,7 +48,7 @@ module CPU(input reset,       // positive reset signal
   wire is_stall;
   // for ecall data forwarding
   wire is_ecall_forward;
-  wire x17;
+  wire [31:0] x17;
   
   /***** Register declarations *****/
   // You need to modify the width of registers
@@ -192,7 +192,7 @@ module CPU(input reset,       // positive reset signal
   assign is_ecall_forward = EX_MEM_reg_write && (EX_MEM_rd == 17);
 
   // ---------- Mux for selecting x17 ----------
-  Mux #(.bits(5)) mux_rs1_src( 
+  Mux mux_x17( 
     .input0(rs1_dout),        // input
     .input1(EX_MEM_alu_out),  // input
     .sel(is_ecall_forward),   // input

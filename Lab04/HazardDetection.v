@@ -6,7 +6,7 @@ module HazardDetection(
     input [4:0] rs2,
     input [6:0] opcode,
     input ID_EX_mem_read,
-    input [4:0] EM_MEM_rd,
+    input [4:0] EX_MEM_rd,
     input EX_MEM_mem_read,
     input ID_EX_reg_write,
     input [4:0] ID_EX_rd,
