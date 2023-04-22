@@ -1,10 +1,14 @@
 `include "opcodes.v"
 
 module HazardDetection(
+    input is_ecall,
     input [4:0] rs1,
     input [4:0] rs2,
     input [6:0] opcode,
     input ID_EX_mem_read,
+    input [4:0] EM_MEM_rd,
+    input EX_MEM_mem_read,
+    input ID_EX_reg_write,
     input [4:0] ID_EX_rd,
     output reg is_stall
     );
@@ -24,7 +28,8 @@ module HazardDetection(
     );
     
     always @(*) begin
-        is_stall = ((use_rs1 && rs1 == ID_EX_rd) || (use_rs2 && rs2 == ID_EX_rd)) && ID_EX_mem_read;
+        is_stall = (((use_rs1 && rs1 == ID_EX_rd) || (use_rs2 && rs2 == ID_EX_rd)) && ID_EX_mem_read
+        || (is_ecall && (ID_EX_rd == 17 && (ID_EX_mem_read || ID_EX_reg_write)) || (EX_MEM_rd == 17 && EX_MEM_mem_read)));
     end
 
 endmodule

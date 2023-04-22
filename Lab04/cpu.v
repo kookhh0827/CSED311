@@ -161,7 +161,11 @@ module CPU(input reset,       // positive reset signal
     .opcode(IF_ID_inst[6:0]),
     .ID_EX_mem_read(ID_EX_mem_read),
     .ID_EX_rd(ID_EX_rd),
-    .is_stall(is_stall)
+    .is_stall(is_stall),
+    .is_ecall(is_ecall_in),
+    .ID_EX_reg_write(ID_EX_reg_write),
+    .EX_MEM_rd(EX_MEM_rd),
+    .EX_MEM_mem_read(EX_MEM_mem_read)
   );
 
   // ---------- Control Unit ----------
