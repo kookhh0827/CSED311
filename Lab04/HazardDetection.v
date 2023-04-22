@@ -4,7 +4,7 @@ module HazardDetection(
     input [4:0] rs1,
     input [4:0] rs2,
     input [6:0] opcode,
-    input [4:0] ID_EX_mem_read,
+    input ID_EX_mem_read,
     input [4:0] ID_EX_rd,
     output reg is_stall
     );

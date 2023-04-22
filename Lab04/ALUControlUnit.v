@@ -3,16 +3,16 @@
 
 module ALUControlUnit(input [2:0] funct3,
                       input funct7,
-                      input[1:0] ALUOp,
+                      input[1:0] alu_op,
                       output reg [4:0] alu_control);
                       
     always @(*) begin
         alu_control = `ALU_NOP;
-        if (ALUOp == 2'b00) begin
+        if (alu_op == 2'b00) begin
             // add case
             alu_control = `ALU_ADD;
         end
-        else if (ALUOp == 2'b01) begin
+        else if (alu_op == 2'b01) begin
             // branch case
             case(funct3)
                 `FUNCT3_BEQ: alu_control = `ALU_BEQ;
@@ -22,7 +22,7 @@ module ALUControlUnit(input [2:0] funct3,
                 default: alu_control = `ALU_NOP;
             endcase
         end
-        else if (ALUOp == 2'b10) begin
+        else if (alu_op == 2'b10) begin
             // r-type alu op case
             if (funct7 && funct3 == `FUNCT3_SUB) begin
                 alu_control = `ALU_SUB;
@@ -39,7 +39,7 @@ module ALUControlUnit(input [2:0] funct3,
                 endcase
             end
         end
-        else if (ALUOp == 2'b11) begin
+        else if (alu_op == 2'b11) begin
             // I-type alu op case
             case(funct3)
                 `FUNCT3_ADD: alu_control = `ALU_ADD;

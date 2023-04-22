@@ -11,7 +11,6 @@
 module CPU(input reset,       // positive reset signal
            input clk,         // clock signal
            output is_halted); // Whehther to finish simulation
-  assign is_halted = MEM_WB_is_halted;
   /***** localparams declarations *****/
   localparam halt_register = 5'd17;
   localparam garbage = 32'd0;
@@ -146,7 +145,7 @@ module CPU(input reset,       // positive reset signal
     .rs1(rs1_src),                   // input
     .rs2(IF_ID_inst[24:20]),         // input
     .rd(MEM_WB_rd),                  // input
-    .rd_din(write_data_out),             // input
+    .rd_din(write_data),             // input
     .write_enable(MEM_WB_reg_write), // input
     .rs1_dout(rs1_dout),             // output
     .rs2_dout(rs2_dout)              // output
@@ -157,7 +156,7 @@ module CPU(input reset,       // positive reset signal
     .rs1(IF_ID_inst[19:15]),
     .rs2(IF_ID_inst[24:20]),
     .opcode(IF_ID_inst[6:0]),
-    .ID_EX_mem_read(IF_ID_mem_read),
+    .ID_EX_mem_read(ID_EX_mem_read),
     .ID_EX_rd(ID_EX_rd),
     .is_stall(is_stall)
   );
@@ -253,7 +252,7 @@ module CPU(input reset,       // positive reset signal
 
   // ---------- Mux for selecting foward_src_1 ----------
   Mux4 mux_foward_src_1(
-    .input0(ID_EX_rs1),       // input
+    .input0(ID_EX_rs1_data),       // input
     .input1(EX_MEM_alu_out),  // input
     .input2(write_data),      // input
     .input3(garbage),         // input
@@ -263,7 +262,7 @@ module CPU(input reset,       // positive reset signal
 
   // ---------- Mux for selecting foward_src_2 ----------
   Mux4 mux_foward_src_2(
-    .input0(ID_EX_rs2),       // input
+    .input0(ID_EX_rs2_data),       // input
     .input1(EX_MEM_alu_out),  // input
     .input2(write_data),      // input
     .input3(garbage),         // input
@@ -337,7 +336,7 @@ module CPU(input reset,       // positive reset signal
     end
     else begin
       MEM_WB_mem_to_reg <= EX_MEM_mem_to_reg;
-      MEM_WB_reg_write <= MEM_WB_reg_write;
+      MEM_WB_reg_write <= EX_MEM_reg_write;
       MEM_WB_is_halted <= EX_MEM_is_halted;
       MEM_WB_mem_to_reg_src_1 <= dmem_dout;
       MEM_WB_mem_to_reg_src_2 <= EX_MEM_alu_out;
@@ -352,5 +351,8 @@ module CPU(input reset,       // positive reset signal
     .sel(MEM_WB_mem_to_reg),           // input
     .out(write_data)                   // output
   );
+  
+  // halt output 
+  assign is_halted = MEM_WB_is_halted;
   
 endmodule

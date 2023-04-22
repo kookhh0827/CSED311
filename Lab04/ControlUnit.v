@@ -15,19 +15,19 @@ module ControlUnit(
     always @(*) begin
         case (opcode)
             `ARITHMETIC: begin
-                {mem_rad, mem_to_reg, mem_write, alu_src, write_enable, pc_to_reg, alu_op, is_ecall} = 9'b000010100;
+                {mem_read, mem_to_reg, mem_write, alu_src, write_enable, pc_to_reg, alu_op, is_ecall} = 9'b000010100;
             end
             `ARITHMETIC_IMM: begin
-                {mem_rad, mem_to_reg, mem_write, alu_src, write_enable, pc_to_reg, alu_op, is_ecall} = 9'b000110110;        
+                {mem_read, mem_to_reg, mem_write, alu_src, write_enable, pc_to_reg, alu_op, is_ecall} = 9'b000110110;        
             end
             `LOAD: begin
-                {mem_rad, mem_to_reg, mem_write, alu_src, write_enable, pc_to_reg, alu_op, is_ecall} = 9'b110110000;
+                {mem_read, mem_to_reg, mem_write, alu_src, write_enable, pc_to_reg, alu_op, is_ecall} = 9'b110110000;
             end
             `STORE: begin
-                {mem_rad, mem_to_reg, mem_write, alu_src, write_enable, pc_to_reg, alu_op, is_ecall} = 9'b001100000;
+                {mem_read, mem_to_reg, mem_write, alu_src, write_enable, pc_to_reg, alu_op, is_ecall} = 9'b001100000;
             end
             `ECALL: begin
-                {mem_rad, mem_to_reg, mem_write, alu_src, write_enable, pc_to_reg, alu_op, is_ecall} = 9'b000000001;        
+                {mem_read, mem_to_reg, mem_write, alu_src, write_enable, pc_to_reg, alu_op, is_ecall} = 9'b000000001;        
             end
         endcase
     end
