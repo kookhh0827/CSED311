@@ -11,6 +11,11 @@
 module CPU(input reset,       // positive reset signal
            input clk,         // clock signal
            output is_halted); // Whehther to finish simulation
+  assign is_halted = MEM_WB_is_halted;
+  /***** localparams declarations *****/
+  localparam halt_register = 5'd17;
+  localparam garbage = 32'd0;
+
   /***** Wire declarations *****/
   // for Program Counter
   wire [31:0] current_pc, next_pc;
@@ -23,6 +28,9 @@ module CPU(input reset,       // positive reset signal
   wire [1:0] alu_op;
   // for Immedate Generate output
   wire [31:0] imm_gen_out;
+  // for data dowarding
+  wire [1:0] forward_rs1, forward_rs2;
+  wire [31:0] foward_src_1, foward_src_2;
   // for ALU and ALU control unit 
   wire [4:0] alu_control;
   wire [31:0] alu_src_2, alu_result;
@@ -31,6 +39,9 @@ module CPU(input reset,       // positive reset signal
   wire [31:0] dmem_dout;
   // for register write
   wire [31:0] write_data;
+  // for halt checker
+  wire [4:0] rs1_src;
+  wire id_is_halted;
 
   /***** Register declarations *****/
   // You need to modify the width of registers
@@ -47,11 +58,15 @@ module CPU(input reset,       // positive reset signal
   reg ID_EX_mem_read;       // will be used in MEM stage
   reg ID_EX_mem_to_reg;     // will be used in WB stage
   reg ID_EX_reg_write;      // will be used in WB stage
+  // From halt checker
+  reg ID_EX_is_halted;      // will be used in WB stage
   // From others
   reg [31:0] ID_EX_rs1_data;
   reg [31:0] ID_EX_rs2_data;
   reg [31:0] ID_EX_imm;
   reg [3:0] ID_EX_ALU_ctrl_unit_input;
+  reg [4:0] ID_EX_rs1;
+  reg [4:0] ID_EX_rs2;
   reg [4:0] ID_EX_rd;
 
   /***** EX/MEM pipeline registers *****/
@@ -61,6 +76,8 @@ module CPU(input reset,       // positive reset signal
   reg EX_MEM_is_branch;     // will be used in MEM stage
   reg EX_MEM_mem_to_reg;    // will be used in WB stage
   reg EX_MEM_reg_write;     // will be used in WB stage
+  // From halt checker
+  reg EX_MEM_is_halted;      // will be used in WB stage
   // From others
   reg [31:0] EX_MEM_alu_out;
   reg [31:0] EX_MEM_dmem_data;
@@ -70,6 +87,8 @@ module CPU(input reset,       // positive reset signal
   // From the control unit
   reg MEM_WB_mem_to_reg;    // will be used in WB stage
   reg MEM_WB_reg_write;     // will be used in WB stage
+  // From halt checker
+  reg MEM_WB_is_halted;      // will be used in WB stage
   // From others
   reg [31:0] MEM_WB_mem_to_reg_src_1;
   reg [31:0] MEM_WB_mem_to_reg_src_2;
@@ -103,11 +122,19 @@ module CPU(input reset,       // positive reset signal
     end
   end
 
+  // ---------- Mux for selecting rs1_src ----------
+  Mux #(.bits(5)) mux_rs1_src( 
+    .input0(IF_ID_inst[19:15]),  // input
+    .input1(halt_register),      // input
+    .sel(is_ecall),              // input
+    .out(rs1_src)                // output
+  );
+
   // ---------- Register File ----------
   RegisterFile reg_file (
     .reset(reset),                   // input
     .clk(clk),                       // input
-    .rs1(IF_ID_inst[19:15]),         // input
+    .rs1(rs1_src),                   // input
     .rs2(IF_ID_inst[24:20]),         // input
     .rd(MEM_WB_rd),                  // input
     .rd_din(write_data),             // input
@@ -130,10 +157,17 @@ module CPU(input reset,       // positive reset signal
     .is_ecall(is_ecall)              // output (ecall inst)
   );
 
+  // ---------- Halt Checker ----------
+  HaltChecker haltchecker (
+    .x17(rs1_dout),            // input
+    .is_ecall(is_ecall),       // input
+    .is_halted(id_is_halted)   // output
+  );
+
   // ---------- Immediate Generator ----------
   ImmediateGenerator imm_gen(
     .instr(IF_ID_inst[31:0]),  // input
-    .imm_gen_out(imm_gen_out)    // output
+    .imm_gen_out(imm_gen_out)  // output
   );
 
   // Update ID/EX pipeline registers here
@@ -145,10 +179,13 @@ module CPU(input reset,       // positive reset signal
       ID_EX_mem_read <= 0;
       ID_EX_mem_to_reg <= 0;
       ID_EX_reg_write <= 0;
+      ID_EX_is_halted <= 0;
       ID_EX_rs1_data <= 0;
       ID_EX_rs2_data <= 0;
       ID_EX_imm <= 0;
       ID_EX_ALU_ctrl_unit_input <= 0;
+      ID_EX_rs1 <= 0;
+      ID_EX_rs2 <= 0;
       ID_EX_rd <= 0;
     end
     else begin
@@ -158,10 +195,13 @@ module CPU(input reset,       // positive reset signal
       ID_EX_mem_read <= mem_read;
       ID_EX_mem_to_reg <= mem_to_reg;
       ID_EX_reg_write <= write_enable;
+      ID_EX_is_halted <= id_is_halted;
       ID_EX_rs1_data <= rs1_dout;
       ID_EX_rs2_data <= rs2_dout;
       ID_EX_imm <= imm_gen_out;
       ID_EX_ALU_ctrl_unit_input <= {IF_ID_inst[30], IF_ID_inst[14:12]};
+      ID_EX_rs1 <= IF_ID_inst[19:15];
+      ID_EX_rs2 <= IF_ID_inst[24:20];
       ID_EX_rd <= IF_ID_inst[11:7];
     end
   end
@@ -174,9 +214,41 @@ module CPU(input reset,       // positive reset signal
     .alu_control(alu_control)                 // output
   );
 
+  // ---------- Forwarding Unit ----------
+  ForwardingUnit fowarding_unit (
+    .rs1_ex(ID_EX_rs1),                     // input
+    .rs2_ex(ID_EX_rs2),                     // input
+    .rd_mem(EX_MEM_rd),                     // input
+    .register_write_mem(EX_MEM_reg_write),  // input
+    .rd_wb(MEM_WB_rd),                      // input
+    .register_write_wb(MEM_WB_reg_write),   // input
+    .forward_rs1(forward_rs1),              // output
+    .forward_rs2(forward_rs2)               // output
+  );
+
+  // ---------- Mux for selecting foward_src_1 ----------
+  Mux4 mux_foward_src_1(
+    .input0(ID_EX_rs1),       // input
+    .input1(EX_MEM_alu_out),  // input
+    .input2(write_data),      // input
+    .input3(garbage),         // input
+    .sel(forward_rs1),        // input
+    .out(foward_src_1)        // output
+  );
+
+  // ---------- Mux for selecting foward_src_2 ----------
+  Mux4 mux_foward_src_2(
+    .input0(ID_EX_rs2),       // input
+    .input1(EX_MEM_alu_out),  // input
+    .input2(write_data),      // input
+    .input3(garbage),         // input
+    .sel(forward_rs2),        // input
+    .out(foward_src_2)        // output
+  );
+
   // ---------- Mux for selecting alu_src_2 ----------
   Mux mux_alu_src_2(
-    .input0(ID_EX_rs2_data),    // input
+    .input0(foward_src_2),      // input
     .input1(ID_EX_imm),         // input
     .sel(ID_EX_alu_src),        // input
     .out(alu_src_2)             // output
@@ -185,7 +257,7 @@ module CPU(input reset,       // positive reset signal
   // ---------- ALU ----------
   ALU alu (
     .alu_control(alu_control),      // input
-    .alu_in_1(ID_EX_rs1_data),      // input  
+    .alu_in_1(foward_src_1),        // input  
     .alu_in_2(alu_src_2),           // input
     .alu_result(alu_result),        // output
     .alu_bcond(alu_bcond)           // output
@@ -199,6 +271,7 @@ module CPU(input reset,       // positive reset signal
       EX_MEM_is_branch <= 0;
       EX_MEM_mem_to_reg <= 0;
       EX_MEM_reg_write <= 0;
+      EX_MEM_is_halted <= 0;
       EX_MEM_alu_out <= 0;
       EX_MEM_dmem_data <= 0;
       EX_MEM_rd <= 0;
@@ -209,8 +282,9 @@ module CPU(input reset,       // positive reset signal
       EX_MEM_is_branch <= 0;
       EX_MEM_mem_to_reg <= ID_EX_mem_to_reg;
       EX_MEM_reg_write <= ID_EX_reg_write;
+      EX_MEM_is_halted <= ID_EX_is_halted;
       EX_MEM_alu_out <= alu_result;
-      EX_MEM_dmem_data <= ID_EX_rs2_data;
+      EX_MEM_dmem_data <= foward_src_2;
       EX_MEM_rd <= ID_EX_rd;
     end
   end
@@ -231,6 +305,7 @@ module CPU(input reset,       // positive reset signal
     if (reset) begin
       MEM_WB_mem_to_reg <= 0;
       MEM_WB_reg_write <= 0;
+      MEM_WB_is_halted <= 0;
       MEM_WB_mem_to_reg_src_1 <= 0;
       MEM_WB_mem_to_reg_src_2 <= 0;
       MEM_WB_rd <= 0;
@@ -238,12 +313,14 @@ module CPU(input reset,       // positive reset signal
     else begin
       MEM_WB_mem_to_reg <= EX_MEM_mem_to_reg;
       MEM_WB_reg_write <= MEM_WB_reg_write;
+      MEM_WB_is_halted <= EX_MEM_is_halted;
       MEM_WB_mem_to_reg_src_1 <= dmem_dout;
       MEM_WB_mem_to_reg_src_2 <= EX_MEM_alu_out;
       MEM_WB_rd <= EX_MEM_rd;
     end
   end
 
+  // ---------- Mux for selecting write_data ----------
   Mux mux_write_data(
     .input0(MEM_WB_mem_to_reg_src_2),  // input
     .input1(MEM_WB_mem_to_reg_src_1),  // input
