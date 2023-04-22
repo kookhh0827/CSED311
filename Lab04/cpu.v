@@ -95,7 +95,7 @@ module CPU(input reset,       // positive reset signal
 
   // ---------- Control Unit ----------
   ControlUnit ctrl_unit (
-    .part_of_inst(),  // input
+    .opcode(IF_ID_inst[6:0]),  // input
     .mem_read(),      // output
     .mem_to_reg(),    // output
     .mem_write(),     // output
