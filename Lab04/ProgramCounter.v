@@ -3,6 +3,7 @@
 
 module PC(input	reset,
           input clk,
+          input is_stall,
           input [31:0] next_pc, // next pc state
           output reg [31:0] current_pc); // current pc state
     
@@ -13,6 +14,9 @@ module PC(input	reset,
         // Reset current_pc
         if (reset) begin
             current_pc <= 0;
+        end
+        else if(is_stall) begin
+            current_pc <= current_pc;
         end
         else begin
             current_pc <= next_pc;

@@ -24,8 +24,11 @@ module CPU(input reset,       // positive reset signal
   // for RegisterFile outputs
   wire [31:0] rs1_dout, rs2_dout;
   // for Control Unit outputs
-  wire mem_read, mem_to_reg, mem_write, alu_src, write_enable, pc_to_reg, is_ecall;
-  wire [1:0] alu_op;
+  wire mem_read_in, mem_to_reg_in, mem_write_in, alu_src_in, write_enable_in, pc_to_reg_in, is_ecall_in;
+  wire [1:0] alu_op_in;
+  // for Control Unit MUX outputs
+  wire mem_read_out, mem_to_reg_out, mem_write_out, alu_src_out, write_enable_out, pc_to_reg_out, is_ecall_out;
+  wire [1:0] alu_op_out;
   // for Immedate Generate output
   wire [31:0] imm_gen_out;
   // for data dowarding
@@ -42,7 +45,9 @@ module CPU(input reset,       // positive reset signal
   // for halt checker
   wire [4:0] rs1_src;
   wire id_is_halted;
-
+  // for stall
+  wire is_stall;
+  
   /***** Register declarations *****/
   // You need to modify the width of registers
   // In addition, 
@@ -100,6 +105,7 @@ module CPU(input reset,       // positive reset signal
   PC pc(
     .reset(reset),            // input (Use reset to initialize PC. Initial value must be 0)
     .clk(clk),                // input
+    .is_stall(is_stall),
     .next_pc(next_pc),        // input
     .current_pc(current_pc)   // output
   );
@@ -117,6 +123,9 @@ module CPU(input reset,       // positive reset signal
     if (reset) begin
       IF_ID_inst <= 0;
     end
+    else if(is_stall) begin
+      IF_ID_inst <= IF_ID_inst;
+    end
     else begin
       IF_ID_inst <= instr;
     end
@@ -126,7 +135,7 @@ module CPU(input reset,       // positive reset signal
   Mux #(.bits(5)) mux_rs1_src( 
     .input0(IF_ID_inst[19:15]),  // input
     .input1(halt_register),      // input
-    .sel(is_ecall),              // input
+    .sel(is_ecall_out),              // input
     .out(rs1_src)                // output
   );
 
@@ -137,30 +146,46 @@ module CPU(input reset,       // positive reset signal
     .rs1(rs1_src),                   // input
     .rs2(IF_ID_inst[24:20]),         // input
     .rd(MEM_WB_rd),                  // input
-    .rd_din(write_data),             // input
+    .rd_din(write_data_out),             // input
     .write_enable(MEM_WB_reg_write), // input
     .rs1_dout(rs1_dout),             // output
     .rs2_dout(rs2_dout)              // output
   );
 
+  // ------- Hazard Detection ----------
+  HazardDetection hazard_detection(
+    .rs1(IF_ID_inst[19:15]),
+    .rs2(IF_ID_inst[24:20]),
+    .opcode(IF_ID_inst[6:0]),
+    .ID_EX_mem_read(IF_ID_mem_read),
+    .ID_EX_rd(ID_EX_rd),
+    .is_stall(is_stall)
+  );
 
-  // ---------- Control Unit ----------
+  // ---------s- Control Unit ----------
   ControlUnit ctrl_unit (
     .opcode(IF_ID_inst[6:0]),        // input
-    .mem_read(mem_read),             // output
-    .mem_to_reg(mem_to_reg),         // output
-    .mem_write(mem_write),           // output
-    .alu_src(alu_src),               // output
-    .write_enable(write_enable),     // output
-    .pc_to_reg(pc_to_reg),           // output
-    .alu_op(alu_op),                 // output
-    .is_ecall(is_ecall)              // output (ecall inst)
+    .mem_read(mem_read_in),             // output
+    .mem_to_reg(mem_to_reg_in),         // output
+    .mem_write(mem_write_in),           // output
+    .alu_src(alu_src_in),               // output
+    .write_enable(write_enable_in),     // output
+    .pc_to_reg(pc_to_reg_in),           // output
+    .alu_op(alu_op_in),                 // output
+    .is_ecall(is_ecall_in)              // output (ecall inst)
+  );
+  
+  Mux #(.bits(9)) mux_control_unit( 
+    .input0({mem_read_in, mem_to_reg_in, mem_write_in, alu_src_in, write_enable_in, pc_to_reg_in, is_ecall_in, alu_op_in}),  // input
+    .input1(9'b000000000),      // input
+    .sel(is_stall),              // input
+    .out({mem_read_out, mem_to_reg_out, mem_write_out, alu_src_out, write_enable_out, pc_to_reg_out, is_ecall_out, alu_op_out})                // output
   );
 
   // ---------- Halt Checker ----------
   HaltChecker haltchecker (
     .x17(rs1_dout),            // input
-    .is_ecall(is_ecall),       // input
+    .is_ecall(is_ecall_out),       // input
     .is_halted(id_is_halted)   // output
   );
 
@@ -189,12 +214,12 @@ module CPU(input reset,       // positive reset signal
       ID_EX_rd <= 0;
     end
     else begin
-      ID_EX_alu_op <= alu_op;
-      ID_EX_alu_src <= alu_src;
-      ID_EX_mem_write <= mem_write;
-      ID_EX_mem_read <= mem_read;
-      ID_EX_mem_to_reg <= mem_to_reg;
-      ID_EX_reg_write <= write_enable;
+      ID_EX_alu_op <= alu_op_out;
+      ID_EX_alu_src <= alu_src_out;
+      ID_EX_mem_write <= mem_write_out;
+      ID_EX_mem_read <= mem_read_out;
+      ID_EX_mem_to_reg <= mem_to_reg_out;
+      ID_EX_reg_write <= write_enable_out;
       ID_EX_is_halted <= id_is_halted;
       ID_EX_rs1_data <= rs1_dout;
       ID_EX_rs2_data <= rs2_dout;
