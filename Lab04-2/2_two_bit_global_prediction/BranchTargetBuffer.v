@@ -15,6 +15,7 @@ module BranchTargetBuffer #(parameter ENTRY_BIT = 5) (input clk,
     integer i;
 
     reg val_table[0:2 << ENTRY_BIT - 1];
+    reg is_branch_table[0:2 << ENTRY_BIT - 1];
     reg [TAG_BIT - 1:0] tag_table[0:2 << ENTRY_BIT - 1];
     reg [31:0] btb_table[0:2 << ENTRY_BIT - 1];
 
@@ -32,6 +33,7 @@ module BranchTargetBuffer #(parameter ENTRY_BIT = 5) (input clk,
         val_table[EX_btb_idx] = val_table[EX_btb_idx];
         tag_table[EX_btb_idx] = tag_table[EX_btb_idx];
         btb_table[EX_btb_idx] = btb_table[EX_btb_idx];
+        is_branch_table[EX_btb_idx] = is_branch_table[EX_btb_idx]
         is_flush = 1'b0;
         next_pc = current_pc + 4;
 
@@ -39,6 +41,7 @@ module BranchTargetBuffer #(parameter ENTRY_BIT = 5) (input clk,
             val_table[EX_btb_idx] = 1'b1;
             tag_table[EX_btb_idx] = EX_tag;
             btb_table[EX_btb_idx] = EX_pc_plus_imm;
+            is_branch_table[EX_btb_idx] = 1'b0;
 
             if (IF_ID_pc != EX_pc_plus_imm)
                 is_flush = 1'b1;
@@ -49,6 +52,7 @@ module BranchTargetBuffer #(parameter ENTRY_BIT = 5) (input clk,
             val_table[EX_btb_idx] = 1'b1;
             tag_table[EX_btb_idx] = EX_tag;
             btb_table[EX_btb_idx] = EX_pc_plus_imm;
+            is_branch_table[EX_btb_idx] = 1'b1;
 
             if (EX_alu_bcond && (EX_pc_plus_imm != IF_ID_pc))
                 is_flush = 1'b1;
@@ -61,6 +65,7 @@ module BranchTargetBuffer #(parameter ENTRY_BIT = 5) (input clk,
             val_table[EX_btb_idx] = 1'b1;
             tag_table[EX_btb_idx] = EX_tag;
             btb_table[EX_btb_idx] = EX_alu_result;
+            is_branch_table[EX_btb_idx] = 1'b0;
 
             if (IF_ID_pc != EX_alu_result)
                 is_flush = 1'b1;
@@ -68,6 +73,11 @@ module BranchTargetBuffer #(parameter ENTRY_BIT = 5) (input clk,
                 is_flush = 1'b0;
         end
         else begin
+            val_table[EX_btb_idx] = 0;
+            tag_table[EX_btb_idx] = 0;
+            btb_table[EX_btb_idx] = 0;
+            is_branch_table[EX_btb_idx] = 0;
+
             is_flush = 1'b0;
         end
 
@@ -89,7 +99,7 @@ module BranchTargetBuffer #(parameter ENTRY_BIT = 5) (input clk,
             end
         end
         else begin
-            if (tag_table[btb_idx] == tag && val_table[btb_idx] && current_counter > 2'b01) begin
+            if (tag_table[btb_idx] == tag && val_table[btb_idx] && (!is_branch_table[btb_idx] || current_counter > 2'b01)) begin
                 next_pc = btb_table[btb_idx];
             end
             else begin
@@ -127,6 +137,7 @@ module BranchTargetBuffer #(parameter ENTRY_BIT = 5) (input clk,
                 val_table[i] <= 0;
                 tag_table[i] <= 0;
                 btb_table[i] <= 0;
+                is_branch_table[i] <= 0;
                 current_counter <= 2'b00;
             end
         end
