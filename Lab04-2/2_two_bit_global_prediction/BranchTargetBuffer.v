@@ -26,7 +26,7 @@ module BranchTargetBuffer #(parameter ENTRY_BIT = 5) (input clk,
 
     // 2 bit predcitor
     reg [1:0] current_counter;
-    wire [1:0] next_counter;
+    reg [1:0] next_counter;
 
     always @(*) begin
         val_table[EX_btb_idx] = val_table[EX_btb_idx];
@@ -89,7 +89,7 @@ module BranchTargetBuffer #(parameter ENTRY_BIT = 5) (input clk,
             end
         end
         else begin
-            if (tag_table[btb_idx] == tag && val_table[btb_idx] && current_counter >= 2'b01) begin
+            if (tag_table[btb_idx] == tag && val_table[btb_idx] && current_counter > 2'b01) begin
                 next_pc = btb_table[btb_idx];
             end
             else begin
