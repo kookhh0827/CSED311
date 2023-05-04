@@ -1,17 +1,13 @@
-`include "opcodes.v"
-
-module HazardDetection(
-    input [4:0] rs1,
-    input [4:0] rs2,
-    input [6:0] opcode,
-    input ID_EX_mem_read,
-    input [4:0] ID_EX_rd,
-    input is_ecall,
-    input ID_EX_reg_write,
-    input [4:0] EX_MEM_rd,
-    input EX_MEM_mem_read,
-    output reg is_stall
-    );
+module HazardDetection(input [4:0] rs1,
+                       input [4:0] rs2,
+                       input [6:0] opcode,
+                       input ID_EX_mem_read,
+                       input [4:0] ID_EX_rd,
+                       input is_ecall,
+                       input ID_EX_reg_write,
+                       input [4:0] EX_MEM_rd,
+                       input EX_MEM_mem_read,
+                       output reg is_stall);
 
     wire use_rs1, use_rs2;
     
