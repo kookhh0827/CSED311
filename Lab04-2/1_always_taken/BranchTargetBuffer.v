@@ -1,16 +1,16 @@
-module #(parameter ENTRY_BIT = 5) BranchTargetBuffer(input clk,
-                                                     input reset,
-                                                     input [31:0] current_pc,
-                                                     input [31:0] IF_ID_pc,
-                                                     input [31:0] ID_EX_pc,
-                                                     input [31:0] EX_pc_plus_imm,
-                                                     input [31:0] EX_alu_result,
-                                                     input ID_EX_is_branch,
-                                                     input ID_EX_is_jal,
-                                                     input ID_EX_is_jalr,
-                                                     input EX_alu_bcond,
-                                                     output reg is_flush,
-                                                     output reg [31:0] next_pc);
+module BranchTargetBuffer #(parameter ENTRY_BIT = 5) (input clk,
+                                                      input reset,
+                                                      input [31:0] current_pc,
+                                                      input [31:0] IF_ID_pc,
+                                                      input [31:0] ID_EX_pc,
+                                                      input [31:0] EX_pc_plus_imm,
+                                                      input [31:0] EX_alu_result,
+                                                      input ID_EX_is_branch,
+                                                      input ID_EX_is_jal,
+                                                      input ID_EX_is_jalr,
+                                                      input EX_alu_bcond,
+                                                      output reg is_flush,
+                                                      output reg [31:0] next_pc);
     localparam TAG_BIT = 32 - ENTRY_BIT - 2;
     integer i;
 
@@ -28,7 +28,7 @@ module #(parameter ENTRY_BIT = 5) BranchTargetBuffer(input clk,
         val_table[EX_btb_idx] = val_table[EX_btb_idx];
         tag_table[EX_btb_idx] = tag_table[EX_btb_idx];
         btb_table[EX_btb_idx] = btb_table[EX_btb_idx];
-        if_flush = 1'b0;
+        is_flush = 1'b0;
         next_pc = current_pc + 4;
 
         if (ID_EX_is_jal) begin
@@ -37,21 +37,21 @@ module #(parameter ENTRY_BIT = 5) BranchTargetBuffer(input clk,
             btb_table[EX_btb_idx] = EX_pc_plus_imm;
 
             if (IF_ID_pc != EX_pc_plus_imm)
-                if_flush = 1'b1;
+                is_flush = 1'b1;
             else
-                if_flush = 1'b0;
+                is_flush = 1'b0;
         end
         else if (ID_EX_is_branch) begin
             val_table[EX_btb_idx] = 1'b1;
             tag_table[EX_btb_idx] = EX_tag;
             btb_table[EX_btb_idx] = EX_pc_plus_imm;
 
-            if (alu_bcond && (EX_pc_plus_imm != IF_ID_pc))
-                if_flush = 1'b1;
-            else if (!alu_bcond && (IF_ID_pc != ID_EX_pc + 4))
-                if_flush = 1'b1;
+            if (EX_alu_bcond && (EX_pc_plus_imm != IF_ID_pc))
+                is_flush = 1'b1;
+            else if (!EX_alu_bcond && (IF_ID_pc != ID_EX_pc + 4))
+                is_flush = 1'b1;
             else
-                if_flush = 1'b0;
+                is_flush = 1'b0;
         end
         else if (ID_EX_is_jalr) begin
             val_table[EX_btb_idx] = 1'b1;
@@ -59,23 +59,20 @@ module #(parameter ENTRY_BIT = 5) BranchTargetBuffer(input clk,
             btb_table[EX_btb_idx] = EX_alu_result;
 
             if (IF_ID_pc != EX_alu_result)
-                if_flush = 1'b1;
+                is_flush = 1'b1;
             else
-                if_flush = 1'b0;
+                is_flush = 1'b0;
         end
         else begin
-            if (IF_ID_pc != ID_EX_pc + 4)
-                if_flush = 1'b1;
-            else
-                if_flush = 1'b0;
+            is_flush = 1'b0;
         end
 
-        if (if_flush) begin
+        if (is_flush) begin
             if (ID_EX_is_jal) begin
                 next_pc = EX_pc_plus_imm;
             end
             else if (ID_EX_is_branch) begin
-                if (alu_bcond)
+                if (EX_alu_bcond)
                     next_pc = EX_pc_plus_imm;
                 else
                     next_pc = ID_EX_pc + 4;
@@ -84,7 +81,7 @@ module #(parameter ENTRY_BIT = 5) BranchTargetBuffer(input clk,
                 next_pc = EX_alu_result;
             end
             else begin
-                next_pc = ID_EX_pc + 4;
+                next_pc = current_pc + 4;
             end
         end
         else begin
@@ -101,9 +98,9 @@ module #(parameter ENTRY_BIT = 5) BranchTargetBuffer(input clk,
     always @(posedge clk) begin
         if (reset) begin
             for (i = 0; i < (2 << ENTRY_BIT); i = i + 1) begin
-                val_table[i] <= 1'b0;
-                tag_table[i] <= TAG_BIT'b0;
-                btb_table[i] <= 32'b0;
+                val_table[i] <= 0;
+                tag_table[i] <= 0;
+                btb_table[i] <= 0;
             end
         end
     end
