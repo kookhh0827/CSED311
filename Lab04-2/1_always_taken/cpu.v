@@ -115,6 +115,8 @@ module CPU(input reset,       // positive reset signal
 
   // ---------- Branch Target Buffer ----------
   BranchTargetBuffer BTB(
+    .reset(reset),
+    .clk(clk),
     .current_pc(current_pc),            // input
     .IF_ID_pc(IF_ID_pc),                // input
     .ID_EX_pc(ID_EX_pc),                // input
