@@ -110,18 +110,22 @@ module CPU(input reset,       // positive reset signal
   reg [31:0] MEM_WB_mem_to_reg_src_2;
   reg [4:0] MEM_WB_rd;
 
-  // ---------- Update program counter ----------
-  assign pc_plus_4 = current_pc + 4;
+  // ---------- Calculating PC + imm in EX stage ----------
   assign pc_plus_imm = ID_EX_pc + ID_EX_imm;
-  assign pc_src = {ID_EX_is_jalr, (ID_EX_is_branch && alu_bcond) || ID_EX_is_jal};
 
-  Mux4 mux_next_pc(
-    .input0(pc_plus_4),       // input
-    .input1(pc_plus_imm),     // input (from EX stage)
-    .input2(alu_result),      // input (from EX stage)
-    .input3(garbage),         // input
-    .sel(pc_src),        // input
-    .out(next_pc)        // output
+  // ---------- Branch Target Buffer ----------
+  BranchTargetBuffer BTB(
+    .current_pc(current_pc),            // input
+    .IF_ID_pc(IF_ID_pc),                // input
+    .ID_EX_pc(ID_EX_pc),                // input
+    .EX_pc_plus_imm(pc_plus_imm),       // input
+    .EX_alu_result(alu_result),         // input
+    .ID_EX_is_branch(ID_EX_is_branch),  // input
+    .ID_EX_is_jal(ID_EX_is_jal),        // input
+    .ID_EX_is_jalr(ID_EX_is_jalr),      // input
+    .EX_alu_bcond(alu_bcond),           // input
+    .is_flush(is_flush),                // output
+    .next_pc(next_pc)                   // output
   );
 
   // PC must be updated on the rising edge (positive edge) of the clock.
@@ -190,11 +194,6 @@ module CPU(input reset,       // positive reset signal
     .ID_EX_reg_write(ID_EX_reg_write),  // input
     .EX_MEM_rd(EX_MEM_rd),              // input
     .EX_MEM_mem_read(EX_MEM_mem_read),  // input
-    .ID_EX_is_jal(ID_EX_is_jal),        // input
-    .ID_EX_is_jalr(ID_EX_is_jalr),      // input
-    .ID_EX_is_branch(ID_EX_is_branch),  // input
-    .EX_alu_bcond(alu_bcond),           // input
-    .is_flush(is_flush),                // output
     .is_stall(is_stall)                 // output
   );
 
