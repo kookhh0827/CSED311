@@ -33,7 +33,7 @@ module BranchTargetBuffer #(parameter ENTRY_BIT = 5) (input clk,
         val_table[EX_btb_idx] = val_table[EX_btb_idx];
         tag_table[EX_btb_idx] = tag_table[EX_btb_idx];
         btb_table[EX_btb_idx] = btb_table[EX_btb_idx];
-        is_branch_table[EX_btb_idx] = is_branch_table[EX_btb_idx]
+        is_branch_table[EX_btb_idx] = is_branch_table[EX_btb_idx];
         is_flush = 1'b0;
         next_pc = current_pc + 4;
 
