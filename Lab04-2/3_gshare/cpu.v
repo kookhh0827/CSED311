@@ -16,6 +16,8 @@ module CPU(input reset,       // positive reset signal
   localparam garbage = 32'd0;
 
   /***** Wire declarations *****/
+  // for btb
+  wire [4:0] = IF_bhsr;
   // for Program Counter
   wire [31:0] current_pc, next_pc;
   wire [31:0] pc_plus_4, pc_plus_imm;
@@ -61,6 +63,7 @@ module CPU(input reset,       // positive reset signal
   /***** IF/ID pipeline registers *****/
   reg [31:0] IF_ID_inst;    // will be used in ID stage
   reg [31:0] IF_ID_pc;      // will be used in EX stage
+  reg [4:0] IF_ID_bhsr;
 
   /***** ID/EX pipeline registers *****/
   // From the control unit
@@ -85,6 +88,7 @@ module CPU(input reset,       // positive reset signal
   reg [4:0] ID_EX_rs1;
   reg [4:0] ID_EX_rs2;
   reg [4:0] ID_EX_rd;
+  reg [4:0] ID_EX_bhsr;
 
   /***** EX/MEM pipeline registers *****/
   // From the control unit
@@ -126,6 +130,8 @@ module CPU(input reset,       // positive reset signal
     .ID_EX_is_jal(ID_EX_is_jal),        // input
     .ID_EX_is_jalr(ID_EX_is_jalr),      // input
     .EX_alu_bcond(alu_bcond),           // input
+    .ID_EX_bhsr(ID_EX_bhsr),            // input
+    .current_bhsr(IF_bhsr),             // input
     .is_flush(is_flush),                // output
     .next_pc(next_pc)                   // output
   );
@@ -153,14 +159,17 @@ module CPU(input reset,       // positive reset signal
     if (reset || is_flush) begin
       IF_ID_inst <= 0;
       IF_ID_pc <= 0;
+      IF_ID_bhsr <= 0;
     end
     else if(is_stall) begin
       IF_ID_inst <= IF_ID_inst;
       IF_ID_pc <= IF_ID_pc;
+      IF_ID_bhsr <= IF_ID_bhsr;
     end
     else begin
       IF_ID_inst <= instr;
       IF_ID_pc <= current_pc;
+      IF_ID_bhsr <= IF_bhsr;
     end
   end
 
@@ -268,6 +277,7 @@ module CPU(input reset,       // positive reset signal
       ID_EX_rs1 <= 0;
       ID_EX_rs2 <= 0;
       ID_EX_rd <= 0;
+      ID_EX_bhsr <= 0;
     end
     else begin
       ID_EX_pc <= IF_ID_pc;
@@ -289,6 +299,7 @@ module CPU(input reset,       // positive reset signal
       ID_EX_rs1 <= IF_ID_inst[19:15];
       ID_EX_rs2 <= IF_ID_inst[24:20];
       ID_EX_rd <= IF_ID_inst[11:7];
+      ID_EX_bhsr <= IF_ID_bhsr;
     end
   end
 
