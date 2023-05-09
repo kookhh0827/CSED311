@@ -10,7 +10,7 @@ module BranchTargetBuffer #(parameter ENTRY_BIT = 5) (input clk,
                                                       input ID_EX_is_jalr,
                                                       input EX_alu_bcond,
                                                       input [ENTRY_BIT-1:0] ID_EX_bhsr,
-                                                      output reg [ENTRY_BIT-1:0] current_bhsr,
+                                                      output [ENTRY_BIT-1:0] current_bhsr,
                                                       output reg is_flush,
                                                       output reg [31:0] next_pc);
     localparam TAG_BIT = 32 - ENTRY_BIT - 2;
@@ -18,6 +18,7 @@ module BranchTargetBuffer #(parameter ENTRY_BIT = 5) (input clk,
 
     // global bhsr
     reg [ENTRY_BIT-1:0] global_bhsr;
+    assign current_bhsr = global_bhsr;
 
     // 2 bit predcitor
     reg [1:0] current_counter[0:2 << ENTRY_BIT - 1];
@@ -127,7 +128,7 @@ module BranchTargetBuffer #(parameter ENTRY_BIT = 5) (input clk,
         if (ID_EX_is_branch) begin
             if (EX_alu_bcond) begin
                 if (current_counter[EX_btb_idx ^ ID_EX_bhsr] != 2'b11)
-                    next_counter = current_counte[EX_btb_idx ^ ID_EX_bhsr]r + 1'b1;
+                    next_counter = current_counter[EX_btb_idx ^ ID_EX_bhsr] + 1'b1;
                 else
                     next_counter = current_counter[EX_btb_idx ^ ID_EX_bhsr];
             end
@@ -162,8 +163,10 @@ module BranchTargetBuffer #(parameter ENTRY_BIT = 5) (input clk,
                 btb_table[EX_btb_idx] <= new_btb;
                 is_branch_table[EX_btb_idx] <= new_is_branch;
             end
-            current_counter[EX_btb_idx ^ ID_EX_bhsr] <= next_counter;
-            global_bhsr <= {global_bhsr << 1, EX_alu_bcond};
+            if (ID_EX_is_branch) begin
+                current_counter[EX_btb_idx ^ ID_EX_bhsr] <= next_counter;
+                global_bhsr <= {global_bhsr[ENTRY_BIT-2:0], EX_alu_bcond};
+            end
         end
     end
 endmodule

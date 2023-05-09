@@ -17,7 +17,7 @@ module CPU(input reset,       // positive reset signal
 
   /***** Wire declarations *****/
   // for btb
-  wire [4:0] = IF_bhsr;
+  wire [4:0] IF_bhsr;
   // for Program Counter
   wire [31:0] current_pc, next_pc;
   wire [31:0] pc_plus_4, pc_plus_imm;
