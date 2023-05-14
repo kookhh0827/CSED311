@@ -33,7 +33,7 @@ module BranchTargetBuffer #(parameter ENTRY_BIT = 5) (input clk,
     wire [TAG_BIT - 1:0] EX_tag = ID_EX_pc[31:2 + ENTRY_BIT];
 
     // 2 bit predcitor
-    reg [1:0] current_counter;
+    reg [1:0] current_counter[0:2 << ENTRY_BIT - 1];
     reg [1:0] next_counter;
 
     // calculating flush and next pc
@@ -107,7 +107,7 @@ module BranchTargetBuffer #(parameter ENTRY_BIT = 5) (input clk,
             end
         end
         else begin
-            if (tag_table[btb_idx] == tag && val_table[btb_idx] && (!is_branch_table[btb_idx] || current_counter > 2'b01)) begin
+            if (tag_table[btb_idx] == tag && val_table[btb_idx] && (!is_branch_table[btb_idx] || current_counter[btb_idx] > 2'b01)) begin
                 next_pc = btb_table[btb_idx];
             end
             else begin
@@ -118,23 +118,23 @@ module BranchTargetBuffer #(parameter ENTRY_BIT = 5) (input clk,
 
     // calculating states of saturation counter
     always @(*) begin
-        next_counter = current_counter;
+        next_counter = current_counter[EX_btb_idx];
         if (ID_EX_is_branch) begin
             if (EX_alu_bcond) begin
-                if (current_counter != 2'b11)
-                    next_counter = current_counter + 1'b1;
+                if (current_counter[EX_btb_idx] != 2'b11)
+                    next_counter = current_counter[EX_btb_idx] + 1'b1;
                 else
-                    next_counter = current_counter;
+                    next_counter = current_counter[EX_btb_idx];
             end
             else begin
-                if (current_counter != 2'b00)
-                    next_counter = current_counter - 1'b1;
+                if (current_counter[EX_btb_idx] != 2'b00)
+                    next_counter = current_counter[EX_btb_idx] - 1'b1;
                 else
-                    next_counter = current_counter;
+                    next_counter = current_counter[EX_btb_idx];
             end
         end
         else begin
-            next_counter = current_counter;
+            next_counter = current_counter[EX_btb_idx];
         end
     end
 
@@ -146,8 +146,8 @@ module BranchTargetBuffer #(parameter ENTRY_BIT = 5) (input clk,
                 tag_table[i] <= 0;
                 btb_table[i] <= 0;
                 is_branch_table[i] <= 0;
+                current_counter[i] <= 0;
             end
-            current_counter <= 2'b00;
         end
         else begin
             if (is_flush) begin
@@ -156,7 +156,7 @@ module BranchTargetBuffer #(parameter ENTRY_BIT = 5) (input clk,
                 btb_table[EX_btb_idx] <= new_btb;
                 is_branch_table[EX_btb_idx] <= new_is_branch;
             end
-            current_counter <= next_counter;
+            current_counter[EX_btb_idx] <= next_counter;
         end
     end
 endmodule
