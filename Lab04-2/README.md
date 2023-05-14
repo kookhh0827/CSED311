@@ -19,6 +19,17 @@ Control flow instruction의 경우 다음 PC 값이 PC+4가 아닐 수도 있는
 
 ## Design
 
+"Always not taken"의 Microarchitecture는 다음과 같다.
+
+![always\_not\_taken](./image_sources/always_not_taken.jpeg)
+
+여기서 Gshare를 구현하기 위해 BTB 모듈을 추가하였고, 단순한 Lookup table의 역할을 넘어서
+Flush 여부 확인, Next PC 출력, BHSR 추가를 하였다.
+완성된 CPU의 Microarchitecture는 다음과 같다.
+
+![ghare](./image_sources/gshare.jpeg)
+
+BTB Module의 세부 디자인은 아래와 같다.
 수업 시간에 배운 Gshare의 Branch Prediction의 경우 tag table, BHT, BTB 모두가
 같은 Index를 공유하고 있다.
 하지만, Branch Instrution의 경우 bcond를 알게 되고 BTB나 tag를 업데이트 하려고할 때,
