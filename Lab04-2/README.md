@@ -94,7 +94,7 @@ Branch Prediction의 종류 별로 어떤 차이가 발생하는지 확인해볼
 |:--:|:--:|:--:|:--:|
 |basic\_mem|35|35|=|
 |ifelse\_mem|43|43|=|
-|loop\_mem|292|314|<|
+|loop\_mem|294|314|<|
 |non-controlflow\_mem|46|46|=|
 |non\_control\_flow\_mem|59|59|=|
 |recursive\_mem|1045|1035|>|
