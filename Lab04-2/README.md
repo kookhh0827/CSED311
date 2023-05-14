@@ -110,8 +110,5 @@ Branch Prediction의 종류 별로 어떤 차이가 발생하는지 확인해볼
 |non\_control\_flow\_mem|59|59|=|
 |recursive\_mem|1045|1035|>|
 
-Gshare의 경우 Saturation Counter가 Index별로 있기 때문에,
-초반에는 2-bit global prediction보다 Not Taken이 나오게 될 확률이 높다.
-따라서, 초반에 Taken이 자주 나오게 되는 Program의 경우
-잘못된 예측으로 인해 Gshare의 Cycle수가 더 많을 수 있다.
-하지만, Instruction의 수가 길어질수록 Gshare의 Performance가 더 나을 확률이 높아진다.
+Gshare의 경우 branch간 Correlation이 클수록 더 높은 성능을 보여준다.
+따라서, Correlation이 높고 프로그램의 instruction이 길어질수록 더 나은 성능을 보여줄 것으로 기대가 된다.
