@@ -5,6 +5,7 @@ module PC(input	reset,
           input clk,
           input is_flush,
           input is_stall,
+          input cache_stall,
           input [31:0] next_pc, // next pc state
           output reg [31:0] current_pc); // current pc state
     
@@ -16,7 +17,7 @@ module PC(input	reset,
         if (reset) begin
             current_pc <= 0;
         end
-        else if(!is_flush && is_stall) begin
+        else if((!is_flush && is_stall) || cache_stall) begin
             current_pc <= current_pc;
         end
         else begin

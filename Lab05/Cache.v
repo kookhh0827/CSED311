@@ -1,7 +1,7 @@
 `include "CLOG2.v"
 
 module Cache #(parameter LINE_SIZE = 16,
-               parameter NUM_SETS = 1
+               parameter NUM_SETS = 1,
                parameter NUM_WAYS = 16) (
     input reset,
     input clk,
@@ -20,48 +20,47 @@ module Cache #(parameter LINE_SIZE = 16,
 
   // Wire declarations
   wire is_data_mem_ready;
-  wire bo = addr[3:2];
-  wire idx = addr[CLOG2(NUM_WAYS)+3:4];
-  wire tag = addr[31:CLOG2(NUM_WAYS)+4];
-  wire line_addr = (addr >> CLOG2(LINE_SIZE)) << CLOG2(LINE_SIZE);
+  wire [1:0] bo = addr[3:2];
+  wire [3:0] idx = addr[7:4];
+  wire [31 - 4 - 4:0] tag = addr[31:8];
 
-  wire is_output_valid;
   wire [LINE_SIZE * 8 - 1:0] memory_dout;
+  wire mem_is_output_valid;
 
   // Reg declarations
   // You might need registers to keep the status.
   reg valid_bank [NUM_WAYS-1:0];
   reg dirty_bank [NUM_WAYS-1:0];
-  reg [31 - CLOG2(NUM_WAYS) - 4 - 1:0] tag_bank [NUM_WAYS-1:0];
+  reg [31 - 4 - 4:0] tag_bank [NUM_WAYS-1:0];
   reg [LINE_SIZE * 8 - 1:0] data_bank [NUM_WAYS-1:0];
+  reg [31:0] line_addr;
 
   reg is_write_back, _is_write_back;
   reg is_input_valid, mem_mem_read, mem_mem_write;
-  reg is_input_valid;
 
   assign is_ready = is_data_mem_ready;
-  assign is_hit = ((tag_bank[idx] == tag) && valid_bank[idx]);
+  assign is_hit = ((tag_bank[idx] == tag) && valid_bank[idx]) ;
   assign is_output_valid = is_ready && is_hit;
-  assign dout = data_bank[idx][((bo+1) << CLOG2(32)) - 1 : bo << CLOG2(32)];
+  assign dout = data_bank[idx][((bo + 0) << 5) +: 32];
   
   always @(*) begin
     _is_write_back = 0;
     is_input_valid = 0;
     
-    if (!is_hit) begin
+    if (!is_hit && !mem_is_output_valid && (mem_read || mem_write)) begin
       if (valid_bank[idx] && dirty_bank[idx]) begin
         _is_write_back = 1;
         is_input_valid = 1;
         mem_mem_read = 0;
         mem_mem_write = 1;
-        is_input_valid = 1;
+        line_addr = {tag_bank[idx], idx, 4'b0000};
       end
       else begin
         _is_write_back = 0;
         is_input_valid = 1;
         mem_mem_read = 1;
         mem_mem_write = 0;
-        is_input_valid = 1;
+        line_addr = {addr[31:4], 4'b0000};
       end
     end
     else begin
@@ -69,7 +68,6 @@ module Cache #(parameter LINE_SIZE = 16,
       is_input_valid = 0;
       mem_mem_read = 0;
       mem_mem_write = 0;
-      is_input_valid = 0;
     end
   end
   
@@ -86,22 +84,18 @@ module Cache #(parameter LINE_SIZE = 16,
     else begin
       is_write_back <= _is_write_back;
 
-      if (is_output_valid) begin
+      if (mem_is_output_valid) begin
         valid_bank[idx] <= 1;
         dirty_bank[idx] <= 0;
         tag_bank[idx] <= tag;
         data_bank[idx] <= memory_dout;
-        if (mem_write) begin
-          dirty_bank[idx] <= 1;
-          data_bank[idx][((bo+1) << CLOG2(32)) - 1 : bo << CLOG2(32)] <= din;
-        end
       end
-      else if (!_is_write_back && mem_write) begin
-        dirty_bank[idx] <= 1;
-        data_bank[idx][((bo+1) << CLOG2(32)) - 1 : bo << CLOG2(32)] <= din;
-      end
-      else if (is_write_back && mem_ready) begin
+      else if (is_write_back && is_data_mem_ready) begin
         dirty_bank[idx] <= 0;
+      end
+      else if (!_is_write_back && mem_write && tag_bank[idx] == tag && valid_bank[idx]) begin
+        dirty_bank[idx] <= 1;
+        data_bank[idx][((bo + 0) << 5) +: 32] <= din;
       end
     end
   end
@@ -118,7 +112,7 @@ module Cache #(parameter LINE_SIZE = 16,
     .din(data_bank[idx]),
 
     // is output from the data memory valid?
-    .is_output_valid(is_output_valid),
+    .is_output_valid(mem_is_output_valid),
     .dout(memory_dout),
     // is data memory ready to accept request?
     .mem_ready(is_data_mem_ready)

@@ -44,14 +44,14 @@ module CPU(input reset,       // positive reset signal
   wire [31:0] alu_out; // select between alu_result or ID_EX_pc + 4
   // for Dmem output
   wire [31:0] dmem_dout;
-  wire EX_is_ready, EX_is_hit, EX_is_output_valid;
+  wire MEM_is_ready, MEM_is_hit, MEM_is_output_valid;
   // for register write
   wire [31:0] write_data;
   // for halt checker
   wire [4:0] rs1_src;
   wire id_is_halted;
   // for flush or stall
-  wire is_flush, is_stall;
+  wire is_flush, is_stall, cache_stall;
   // for ecall data forwarding
   wire is_ecall_forward;
   wire [31:0] x17;
@@ -143,6 +143,7 @@ module CPU(input reset,       // positive reset signal
     .clk(clk),                // input
     .is_flush(is_flush),      // input
     .is_stall(is_stall),      // input
+    .cache_stall(cache_stall), // input
     .next_pc(next_pc),        // input
     .current_pc(current_pc)   // output
   );
@@ -157,7 +158,7 @@ module CPU(input reset,       // positive reset signal
 
   // Update IF/ID pipeline registers here
   always @(posedge clk) begin
-    if (reset || is_flush) begin
+    if (reset || (is_flush && !cache_stall)) begin
       IF_ID_inst <= 0;
       IF_ID_pc <= 0;
       IF_ID_bhsr <= 0;
@@ -205,11 +206,13 @@ module CPU(input reset,       // positive reset signal
     .is_ecall(is_ecall_in),             // input
     .ID_EX_reg_write(ID_EX_reg_write),  // input
     .EX_MEM_rd(EX_MEM_rd),              // input
+    .EX_MEM_mem_write(EX_MEM_mem_write), // input
     .EX_MEM_mem_read(EX_MEM_mem_read),  // input
-    .EX_is_hit(EX_is_hit),              // input
-    .EX_is_output_valid(EX_is_output_valid),  // input
-    .EX_is_ready(EX_is_ready),          // input
-    .is_stall(is_stall)                 // output
+    .MEM_is_hit(MEM_is_hit),              // input
+    .MEM_is_output_valid(MEM_is_output_valid),  // input
+    .MEM_is_ready(MEM_is_ready),          // input
+    .is_stall(is_stall),                 // output
+    .cache_stall(cache_stall)          // output
   );
 
   // ---------- Control Unit ----------
@@ -282,6 +285,28 @@ module CPU(input reset,       // positive reset signal
       ID_EX_rs2 <= 0;
       ID_EX_rd <= 0;
       ID_EX_bhsr <= 0;
+    end
+    else if (cache_stall) begin
+      ID_EX_pc <= ID_EX_pc;
+      ID_EX_alu_op <= ID_EX_alu_op;
+      ID_EX_alu_src <= ID_EX_alu_src;
+      ID_EX_mem_write <= ID_EX_mem_write;
+      ID_EX_mem_read <= ID_EX_mem_read;
+      ID_EX_mem_to_reg <= ID_EX_mem_to_reg;
+      ID_EX_reg_write <= ID_EX_reg_write;
+      ID_EX_is_jal <= ID_EX_is_jal;
+      ID_EX_is_jalr <= ID_EX_is_jalr;
+      ID_EX_is_branch <= ID_EX_is_branch;
+      ID_EX_pc_to_reg <= ID_EX_pc_to_reg;
+      ID_EX_is_halted <= ID_EX_is_halted;
+      ID_EX_rs1_data <= ID_EX_rs1_data;
+      ID_EX_rs2_data <= ID_EX_rs2_data;
+      ID_EX_imm <= ID_EX_imm;
+      ID_EX_ALU_ctrl_unit_input <= ID_EX_ALU_ctrl_unit_input;
+      ID_EX_rs1 <= ID_EX_rs1;
+      ID_EX_rs2 <= ID_EX_rs2;
+      ID_EX_rd <= ID_EX_rd;
+      ID_EX_bhsr <= ID_EX_bhsr;
     end
     else begin
       ID_EX_pc <= IF_ID_pc;
@@ -383,6 +408,16 @@ module CPU(input reset,       // positive reset signal
       EX_MEM_dmem_data <= 0;
       EX_MEM_rd <= 0;
     end
+    else if (cache_stall) begin
+      EX_MEM_mem_write <= EX_MEM_mem_write;
+      EX_MEM_mem_read <= EX_MEM_mem_read;
+      EX_MEM_mem_to_reg <= EX_MEM_mem_to_reg;
+      EX_MEM_reg_write <= EX_MEM_reg_write;
+      EX_MEM_is_halted <= EX_MEM_is_halted;
+      EX_MEM_alu_out <= EX_MEM_alu_out;
+      EX_MEM_dmem_data <= EX_MEM_dmem_data;
+      EX_MEM_rd <= EX_MEM_rd;
+    end
     else begin
       EX_MEM_mem_write <= ID_EX_mem_write;
       EX_MEM_mem_read <= ID_EX_mem_read;
@@ -404,9 +439,9 @@ module CPU(input reset,       // positive reset signal
     .mem_read(EX_MEM_mem_read),    // input
     .mem_write(EX_MEM_mem_write),  // input
     .dout(dmem_dout),              // output
-    .is_ready(EX_is_ready),        // output
-    .is_output_valid(EX_is_output_valid), // output
-    .is_hit(EX_is_hit)             // output
+    .is_ready(MEM_is_ready),        // output
+    .is_output_valid(MEM_is_output_valid), // output
+    .is_hit(MEM_is_hit)             // output
   );
 
   // Update MEM/WB pipeline registers here
@@ -418,6 +453,14 @@ module CPU(input reset,       // positive reset signal
       MEM_WB_mem_to_reg_src_1 <= 0;
       MEM_WB_mem_to_reg_src_2 <= 0;
       MEM_WB_rd <= 0;
+    end
+    if (cache_stall) begin
+        MEM_WB_mem_to_reg <= MEM_WB_mem_to_reg;
+        MEM_WB_reg_write <= MEM_WB_reg_write;
+        MEM_WB_is_halted <= MEM_WB_is_halted;
+        MEM_WB_mem_to_reg_src_1 <= MEM_WB_mem_to_reg_src_1;
+        MEM_WB_mem_to_reg_src_2 <= MEM_WB_mem_to_reg_src_2;
+        MEM_WB_rd <= MEM_WB_rd;
     end
     else begin
       MEM_WB_mem_to_reg <= EX_MEM_mem_to_reg;
