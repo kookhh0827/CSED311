@@ -47,6 +47,7 @@ module Cache #(parameter LINE_SIZE = 16,
   // for n-way set associative cache
   reg _is_hit;
   reg [CLOG_NUM_SETS:0] _target_set;
+  reg _is_full;
 
   // assign outputs
   assign is_ready = is_data_mem_ready;
@@ -59,11 +60,21 @@ module Cache #(parameter LINE_SIZE = 16,
     is_input_valid = 0;
     _is_hit = 0;
     _target_set = 0;
+    _is_full = 1;
 
     for (i = 0; i < NUM_SETS; i = i + 1) begin
       if (((tag_bank[idx][i] == tag) && valid_bank[idx][i])) begin
         _is_hit = 1;
         _target_set = i;
+      end
+    end
+
+    if (!_is_hit) begin
+      for (i = 0; i < NUM_SETS; i = i + 1) begin
+        if (! valid_bank[idx][i]) begin
+            _is_full = 0;
+            _target_set = i;
+        end
       end
     end
     
