@@ -2,7 +2,7 @@
 
 module Cache #(parameter LINE_SIZE = 16,
                parameter NUM_SETS = 2,
-               parameter NUM_WAYS = 8) (
+               parameter NUM_WAYS = 16) (
     input reset,
     input clk,
 
@@ -35,10 +35,10 @@ module Cache #(parameter LINE_SIZE = 16,
 
   // Reg declarations
   // You might need registers to keep the status.
-  reg valid_bank [NUM_WAYS] [NUM_SETS];
-  reg dirty_bank [NUM_WAYS] [NUM_SETS];
-  reg [31 - CLOG_LINE_SIZE - CLOG_NUM_WAYS:0] tag_bank [NUM_WAYS] [NUM_SETS];
-  reg [LINE_SIZE * 8 - 1:0] data_bank [NUM_WAYS] [NUM_SETS];
+  reg valid_bank [NUM_WAYS-1:0] [NUM_SETS-1:0];
+  reg dirty_bank [NUM_WAYS-1:0] [NUM_SETS-1:0];
+  reg [31 - CLOG_LINE_SIZE - CLOG_NUM_WAYS:0] tag_bank [NUM_WAYS-1:0] [NUM_SETS-1:0];
+  reg [LINE_SIZE * 8 - 1:0] data_bank [NUM_WAYS-1:0] [NUM_SETS-1:0];
   reg [31:0] line_addr;
 
   reg is_write_back, _is_write_back;
@@ -52,7 +52,7 @@ module Cache #(parameter LINE_SIZE = 16,
   assign is_ready = is_data_mem_ready;
   assign is_hit = _is_hit ;
   assign is_output_valid = is_ready && is_hit;
-  assign dout = data_bank[idx][((bo + 0) << 5) +: 32];
+  assign dout = data_bank[idx][_target_set][((bo + 0) << 5) +: 32];
   
   always @(*) begin
     _is_write_back = 0;
@@ -121,7 +121,7 @@ module Cache #(parameter LINE_SIZE = 16,
         dirty_bank[idx][_target_set] <= 0;
       end
       // is the case of cache write
-      else if (!_is_write_back && mem_write && tag_bank[idx] == tag && valid_bank[idx]) begin
+      else if (!_is_write_back && mem_write && tag_bank[idx][_target_set] == tag && valid_bank[idx][_target_set]) begin
         dirty_bank[idx][_target_set] <= 1;
         data_bank[idx][_target_set][((bo + 0) << 5) +: 32] <= din;
       end
@@ -137,7 +137,7 @@ module Cache #(parameter LINE_SIZE = 16,
     .addr(line_addr),        // NOTE: address must be shifted by CLOG2(LINE_SIZE)
     .mem_read(mem_mem_read),
     .mem_write(mem_mem_write),
-    .din(data_bank[idx]),
+    .din(data_bank[idx][_target_set]),
 
     // is output from the data memory valid?
     .is_output_valid(mem_is_output_valid),
