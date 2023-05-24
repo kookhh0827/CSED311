@@ -48,6 +48,8 @@ module Cache #(parameter LINE_SIZE = 16,
   reg _is_hit;
   reg [CLOG_NUM_SETS:0] _target_set;
   reg _is_full;
+  reg [31:0] counter_bank [NUM_WAYS-1:0] [NUM_SETS-1:0];
+  reg [31:0] _min_count;
 
   // assign outputs
   assign is_ready = is_data_mem_ready;
@@ -61,6 +63,7 @@ module Cache #(parameter LINE_SIZE = 16,
     _is_hit = 0;
     _target_set = 0;
     _is_full = 1;
+    _min_count = 32{1'b1};
 
     for (i = 0; i < NUM_SETS; i = i + 1) begin
       if (((tag_bank[idx][i] == tag) && valid_bank[idx][i])) begin
@@ -74,6 +77,15 @@ module Cache #(parameter LINE_SIZE = 16,
         if (! valid_bank[idx][i]) begin
             _is_full = 0;
             _target_set = i;
+        end
+      end
+    end
+
+    if (_is_full) begin
+      for (i = 0; i < NUM_SETS; i = i + 1) begin
+        if ($unsigned(counter_bank[idx][i]) <= $unsigned(_min_count)) begin
+            _target_set = i;
+            _min_count = counter_bank[idx][i];
         end
       end
     end
@@ -114,6 +126,7 @@ module Cache #(parameter LINE_SIZE = 16,
           dirty_bank[i][j] <= 0;
           tag_bank[i][j] <= 0;
           data_bank[i][j] <= 0;
+          counter_bank[i][j] <= 0;
         end
       end
       is_write_back <= 0;
@@ -126,6 +139,7 @@ module Cache #(parameter LINE_SIZE = 16,
         dirty_bank[idx][_target_set] <= 0;
         tag_bank[idx][_target_set] <= tag;
         data_bank[idx][_target_set] <= memory_dout;
+        counter_bank[idx][_target_set] <= 0;
       end
       // right after the write-back
       else if (is_write_back && is_data_mem_ready) begin
@@ -135,6 +149,10 @@ module Cache #(parameter LINE_SIZE = 16,
       else if (!_is_write_back && mem_write && tag_bank[idx][_target_set] == tag && valid_bank[idx][_target_set]) begin
         dirty_bank[idx][_target_set] <= 1;
         data_bank[idx][_target_set][((bo + 0) << 5) +: 32] <= din;
+      end
+
+      if (is_hit) begin
+        counter_bank[idx][_target_set] += 1;
       end
     end
   end
