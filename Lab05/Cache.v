@@ -63,7 +63,7 @@ module Cache #(parameter LINE_SIZE = 16,
     _is_hit = 0;
     _target_set = 0;
     _is_full = 1;
-    _min_count = 32{1'b1};
+    _min_count = {32{1'b1}};
 
     for (i = 0; i < NUM_SETS; i = i + 1) begin
       if (((tag_bank[idx][i] == tag) && valid_bank[idx][i])) begin
@@ -152,7 +152,7 @@ module Cache #(parameter LINE_SIZE = 16,
       end
 
       if (is_hit) begin
-        counter_bank[idx][_target_set] += 1;
+        counter_bank[idx][_target_set] <= counter_bank[idx][_target_set] + 1;
       end
     end
   end
