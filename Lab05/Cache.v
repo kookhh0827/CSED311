@@ -38,6 +38,7 @@ module Cache #(parameter LINE_SIZE = 16,
   reg is_write_back, _is_write_back;
   reg is_input_valid, mem_mem_read, mem_mem_write;
 
+  // assign outputs
   assign is_ready = is_data_mem_ready;
   assign is_hit = ((tag_bank[idx] == tag) && valid_bank[idx]) ;
   assign is_output_valid = is_ready && is_hit;
