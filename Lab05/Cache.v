@@ -79,13 +79,13 @@ module Cache #(parameter LINE_SIZE = 16,
             _target_set = i;
         end
       end
-    end
 
-    if (_is_full) begin
-      for (i = 0; i < NUM_SETS; i = i + 1) begin
-        if ($unsigned(counter_bank[idx][i]) <= $unsigned(_min_count)) begin
-            _target_set = i;
-            _min_count = counter_bank[idx][i];
+      if (_is_full) begin
+        for (i = 0; i < NUM_SETS; i = i + 1) begin
+          if ($unsigned(counter_bank[idx][i]) < $unsigned(_min_count)) begin
+              _target_set = i;
+              _min_count = counter_bank[idx][i];
+          end
         end
       end
     end
