@@ -16,13 +16,18 @@ module Cache #(parameter LINE_SIZE = 16,
     output [31:0] dout,
     output is_hit);
   
+  localparam DATA_SIZE = 4; // 4 byte
+  localparam CLOG_DATA_SIZE = `CLOG2(DATA_SIZE);
+  localparam CLOG_LINE_SIZE = `CLOG2(LINE_SIZE);
+  localparam CLOG_NUM_WAYS = `CLOG2(NUM_WAYS);
+  
   integer i;
 
   // Wire declarations
   wire is_data_mem_ready;
-  wire [1:0] bo = addr[3:2];
-  wire [3:0] idx = addr[7:4];
-  wire [31 - 4 - 4:0] tag = addr[31:8];
+  wire [CLOG_LINE_SIZE - CLOG_DATA_SIZE - 1:0] bo = addr[CLOG_LINE_SIZE - 1:CLOG_DATA_SIZE];
+  wire [CLOG_NUM_WAYS - 1:0] idx = addr[CLOG_LINE_SIZE + CLOG_NUM_WAYS - 1:CLOG_LINE_SIZE];
+  wire [31 - CLOG_LINE_SIZE - CLOG_NUM_WAYS:0] tag = addr[31:CLOG_LINE_SIZE + CLOG_NUM_WAYS];
 
   wire [LINE_SIZE * 8 - 1:0] memory_dout;
   wire mem_is_output_valid;
@@ -31,7 +36,7 @@ module Cache #(parameter LINE_SIZE = 16,
   // You might need registers to keep the status.
   reg valid_bank [NUM_WAYS-1:0];
   reg dirty_bank [NUM_WAYS-1:0];
-  reg [31 - 4 - 4:0] tag_bank [NUM_WAYS-1:0];
+  reg [31 - CLOG_LINE_SIZE - CLOG_NUM_WAYS:0] tag_bank [NUM_WAYS-1:0];
   reg [LINE_SIZE * 8 - 1:0] data_bank [NUM_WAYS-1:0];
   reg [31:0] line_addr;
 
