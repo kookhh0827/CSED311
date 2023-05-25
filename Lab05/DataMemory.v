@@ -1,5 +1,5 @@
 module DataMemory #(parameter MEM_DEPTH = 16384,
-                    parameter DELAY = 5,
+                    parameter DELAY = 50,
                     parameter BLOCK_SIZE = 16) (
     input reset,
     input clk,
