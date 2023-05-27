@@ -10,6 +10,7 @@ Cache에도 Instruction Cache와 Data Cache가 존재하는데,
 이번 Lab에서는 Data Cache만 구현한다.
 
 ## Design
+우리는 Set-Associative Cache를 디자인 했다.
 
 Cache의 Write Policy는 다음과 같다.
 
@@ -28,6 +29,8 @@ Lab instruction에 따른면 Cache Size는 256Byte로 정해져있다.
 - \# sets
 - \# ways
 - Line Size
+
+ 예를들어, 한 개 line을 16B로 고정했을 때, 2 way set associative cache로 구현한다면 # ways 는 8이 된다. 이 경우에 set 내에서 올바른 일치하는 태그를 지닌 캐시 라인을 선택해야 하므로 반복문을 이용해서 tag를 검사하도록 했다. 만약 replacement를 해야 한다면 아래에서 소개하는 LRU 방식을 이용해서 해당 cahce line의 태그를 Data Memory에 넘겨주는 방식으로 디자인했다.
 
 ### Replacement Policy: LRU
 
@@ -63,9 +66,32 @@ line을 evict하는 방법을 택했다.
 - [31:0] `dout`: Data of memory with given address
 - `is\_hit`: Indicates whether it is a cache hit
 
-<!----
-Need to Fill in Specific Mechanism
------>
+#### Asynchronous Logic
+
+```
+# outputs
+assign is_ready = is_data_mem_ready;
+assign is_hit = _is_hit ;
+assign is_output_valid = is_ready && is_hit;
+assign dout = data_bank[idx][_target_set][((bo + 0) << 5) +: 32];
+```
+is_ready의 경우에는 스켈레톤 코드에 이미 data_mem_ready와 연결되어 있었다. is_hit의 경우에는 set-associative cache에서 각 line의 모든 set을 검사 해야 하므로 이를 위해 _is_hit register을 만들고 연결해 놓았다. is_output_valid의 경우에는 is_ready와 is_hit이 모두 true면 true가 되도록 구현해 놓았으며 dout은 현재 입력으로 들어온 index와 아래 로직에서 찾아진 set을 이용해서 캐시 라인을 지정하고 block offset을 이용해서 출력을 하도록 만들었다.
+
+```
+# always logic
+always @(*) begin
+    ...
+end
+```
+먼저 set-associative 캐시의 구현을 위해서 해당 Index의 tag와 valid를 체크해서 hit과 set을 결정한다. 여기서 hit이 아닐 경우에 먼저 비어있는 (valid가 0인) set이 존재하는지 찾고 있다면 해당 set을 사용한다. 여기서 비어있는 set이 없었을 경우에는 LRU policy를 따라서 제일 적은 counter 값을 갖고 있는 set이 선택되어 퇴출된다. 그 아래 코드에서는 위에서 결정된 바에 따라서 cache miss인 경우에 write-back을 해야 하는 경우, 그냥 데이터만 들고 오면 되는 경우를 나눠서 Data Mem에 넣을 입력을 결정하게 된다.
+
+#### Synchronous Logic
+```
+# clock sync logic
+always @(posedge clk) begin
+end
+```
+여기서는 만약에 Data Memory가 mem_is_output_valid를 내뱉었다면 Data Memory에 Read를 요청한 적이 있고 해당 Read가 완료된 상태라는 의미이므로 Data Mem의 아웃풋을 읽어 와서 banks를 수정 한다. 만약에 is_write_back이 켜져 있고 is_data_mem_ready가 켜져 있다면 write_back을 요청한 적이 있고 그것이 끝나서 data mem이 ready가 된 상태이므로 해당 cache line의 drity bit를 0으로 바꿔서 앞선 async 로직에서 해당 부분에 이제 data read를 요청할 수 있도록 만든다. 만약에 _is_write_back이 0이고 mem_write이 켜져있고 hit라면 해당 캐시 라인 부분에 캐시의 인풋으로 들어온 din을 적어 준다. 마지막으로 LRU를 위해서 is_hit인 경우에는 해당 라인의 counter bank를 1 늘려준다.
 
 ### Hazard Detection: Modified
 
@@ -80,12 +106,9 @@ else begin
     cache_stall = 0;
 end
 ```
-<!----
-Why is is_stall 1?
------>
 
 현재 Mem 단계에서 R/W 를 하고 있으나, is\_hit&&is\_ready&&is\_output\_valid == 1 이 아니라면
-아직 메모리에서 데이터를 읽어오고 있거나 제대로 된 데이터가 아니므로 Stall 한다.
+아직 메모리에서 데이터를 읽어오고 있거나 제대로 된 데이터가 아니므로 Stall 한다. 그리고 이 경우에 MEM 단계까지 stall을 확장해야 하므로 이 부분이 추가적으로 cpu.v에 구현되어 있으며, Data Forwarding을 고려해서 WB stage까지 stall을 시키도록 구현했다.
 
 ## Discussion
 
