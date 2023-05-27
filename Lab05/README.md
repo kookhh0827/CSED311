@@ -117,22 +117,24 @@ end
 깊에 알 수 있는 기회가 되었다.
 
 ## Conclusion
+해당 과제를 통해 캐시 친화적인 프로그래밍을 이해할 수 있었고, 캐시를 직접 구현해 봄으로써 어떠한 식으로 replacement policy가 동작하는지 이해할 수 있었으며, direct-mapped cache와 set-associative 캐시의 차이에 대해 명확하게 이해할 수 있었다. 또한, 아래의 실험을 통해 cycle과 hit ratio를 256B 크기의 용량, 16B 크기의 캐시 라인을 지닌 캐시의 다양한 세팅에 대해서 naive한 매트릭스 연산과 optimal한 매트릭스 연산의 차이를 분석해 볼 수 있었다.
 
 ### Cycle 수 비교
 
-|# Cycles|Directed Mapped Cache|2 way-associative Cache|
-|:------:|:---:|:---:|
-|Naive|91610|96778|
-|OPT|97812|88982|
+|# Cycles|Directed Mapped Cache|2 way set associative Cache|4 way set associative Cache|8 way set associative Cache|
+|:------:|:---:|:---:|:---:|:---:|
+|Naive|91,610|96,778|96,220|111,854|
+|OPT|97,812|88,982|98,172|113,090|
 
 ### Hit ratio 비교
+|Hit Ratio|Directed Mapped Cache|2 way set associative Cache|4 way set associative Cache|8 way set associative Cache|
+|:------:|:---:|:---:|:---:|:---:|
+|Naive|67.57% (1687/2499)|58.66% (1466/2499)|60.58% (1514/2499)|55.38% (1384/2499)|
+|OPT|64.22% (1605/2499)|65.34% (1663/2499)|60.02% (1500/2499)|54.90% (1372/2499)|
 
-<!----
-Need to Fill in Hit Ratio
-Cache hit ratio comparison
-For each matmul, for each # of sets and # of ways
------>
+### 분석
+Direct Mapped Cache(1 way set associatvie cache)에서 Naive가 Opt보다 높은 Hit Ratio와 낮은 Cycle을 보여주었다. 이에 대해서는 Optimal 코드가 비록 매트릭스 A에 대해서 타일 크기 (= 캐시 라인 크기) 만큼씩 값을 불러와 사용하여 cache-friendly 하지만 이 캐시 라인과 다른 매트릭스가 사용하는 캐시 라인의 index가 일치하게 되는 경우가 잦게 발생하여 eviction과 write-back이 자주 발생하기 때문으로 분석할 수 있다.
 
-<!----
-Needs some comments
------>
+2-way의 경우에 optimal한 코드가 다른 모든 경우에 비해서 높은 성능을 보였는데, 우선적으로 index가 겹치는 경우가 생기더라도 Least Recently Used 방법을 사용해 eviction이 일어나게 되므로 더 flexible하게 캐시 미스를 처리할 수 있기 때문으로 보인다. Optimal 코드가 온전하게 타일 크기 (= 캐시 라인 크기)의 사용이 끝날 때까지 eviction 없이 캐시에 해당 부분을 저장해서 반복적으로 가져올 수 있기 때문에 훨씬 좋은 성능을 보일 수 있었다. cache hit ratio는 directed mapped cache에서 Naive보다 적게 나왔음에도 불구하고 replacement policy 덕분에 write-back을 하는 경우가 적어 최종적인 사이클은 더 적게 나왔다고 분석하였다. 이에 반해 Naive 코드 같은 경우에는 cache-friendly 하지 않게 짜여져 있어 다양한 캐시 라인에 계속 접근을 하므로 eviction이 자주 일어나고, dirty한 cache line의 eviction도 자주 일어나 싸이클이 더욱 증가할 수밖에 없다고 분석하였다.
+
+마지막으로 4 way와 8 way의 경우를 살펴보면, 전반적으로 성능이 감소하는 모습을 볼 수 있었다. 이는 너무 많은 way를 갖게 될 경우에 replacement policy인 LRU와 코드간의 조합이 잘 맞아야 성능이 잘 나올 수 있게 되는데, LRU 만으로는 앞으로 어떠한 캐시 라인이 자주 쓰이게 될지, 어떠한 캐시 라인이 앞으로 쓸모 없을지 정확하게 판단하기 어렵기 때문이며 어떠한 replacement policy를 쓰더라도 하드웨어 입장에서는 완벽한 판단을 내리기가 어렵기 때문이다. 그러나 way가 증가할수록 이러한 replacement policy의 역할이 중대해지기 때문에 성능이 조금씩 낮아질 수밖에 없다고 분석 하였다.
